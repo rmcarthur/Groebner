@@ -147,8 +147,6 @@ class Grobner(object):
             a_ = MultiCheb(a_coeffs)
         else:
             raise ValueError('Incompatiable polynomials')
-        a1 = a_*a
-        b1 = b_*b
         s = a_ * a - b_ * b
         #self.polys.append(s)
         return s
