@@ -9,7 +9,7 @@ from multi_cheb import MultiCheb
 from multi_power import MultiPower
 from scipy.linalg import lu
 
-class Grobner(object):
+class Groebner(object):
 
     def __init__(self,polys):
         '''
@@ -18,44 +18,106 @@ class Grobner(object):
         '''
         self.polys = polys
         self.f_len = len(polys)
-        self.largest_mon = maxheap.TermOrder(tuple((0,0,0,0)))
+        self.largest_mon = maxheap.TermOrder(tuple((0,0)))
         self.matrix = pd.DataFrame()
-        self.label = []
-        self.label_count = 0
-        self.np_matrix = np.zeros([0,0])
+        self.label = [] # want to drop this
+        self.label_count = 0 # and this
+        self.np_matrix = np.zeros([0,0]) # and this
         self.term_set = set()
+        self.pd_term_set = set()
         self.term_dict = {}
-        self._build_matrix()
+
+
+        #np objects
+        self.matrix_terms = [] #Instantiate  here?
+        self.np_matrix = np.array([[]])
+
+        self._add_polys(polys)
 
     def solve(self):
         while True:
+
             self._build_matrix()
-            P,L,U = lu(self.matrix.values)
-            P_argmax = np.argmax(P,axis=1)
-            rows_to_keep = P_argmax < self.fs_len
+            self.add_s_to_matrix()
+	    self.matrix = self.matrix.loc[:, (self.matrix != 0).any(axis=0)]
+
+            self.add_r_to_matrix()
+	    self.matrix = self.matrix.loc[:, (self.matrix != 0).any(axis=0)]
 
 
-    def _build_matrix(self):
-        """
-        #TODO: Fix this to just use numpy arrays. You can sort, using numpy arg sort
-    
-        returns:
-        matrix - Pandas DataFrame object with the polynomials indexed
-        """
+            # Flip due to bad ordering in grevlex generator
+
+            # Put correct order on table
+
+            # Put R on top for reduction
+
+            #P,L,U = lu(new_mat)
+            #P_argmax = np.argmax(P,axis=0) 
+
+
+    def _add_polys(self, p_list):
+        '''
+        Adds a single polynomial to the state matrix
+        If an index doesn't exist yet, it adds a new column of zeros, to be sorted at the end
+        params:
+        p - a single polynomial object
+
+        sets self.matrix to the appropriate matrix
+        
+        returns - None
+        '''
+        self.np_matrix = np.array([[]])
+        for p in p_list:
+            # Add a zero row for this polynomial
+            #print('Current np_matrix vals: \n{}'.format(self.np_matrix))
+            #print('Adding poly:\n {}'.format(p.coeff))
+
+            # Sorting by grevlex just gurantees we get all elements
+            # Change it to start at the leading term
+            for idx in p.grevlex_gen(): 
+                idx_term = maxheap.Term(tuple(idx)) #Get a term object 
+                # Grab each non-zero element, put it into matrix. 
+                coeff_val = p.coeff[idx_term.val] 
+                if coeff_val != 0:
+                    # If already in idx_list
+                    if idx_term.val in self.term_set:
+                        # get index of label and np matrix to put into
+                        idx_where = np.argmax([i == idx_term for i in self.matrix_terms]) 
+                        self.np_matrix[0,idx_where] = coeff_val
+
+                    # If new column needed
+                    else:
+                        # Make new column
+                        self.term_set.add(idx_term.val)
+                        length_of_mat = self.np_matrix.shape[0]
+                        if length_of_mat == 0:
+                            self.np_matrix = np.zeros((1,1))
+                        else:
+                            #print(length_of_mat)
+                            #print(np.zeros((1,length_of_mat)))
+                            self.np_matrix = np.hstack((self.np_matrix, np.zeros((1,length_of_mat))))
+                        self.matrix_terms.append(idx_term)
+                        self.np_matrix[0,-1] = coeff_val
+            zero_poly = np.zeros((1,self.np_matrix.shape[1]))
+            self.np_matrix = np.vstack((zero_poly,self.np_matrix))
+        self.np_matrix = self.np_matrix[1:,:]
+        print(self.np_matrix)
+
+        
+
+        # THIS MAKES THE DF NEEDS TO BE REMOVED
         for poly in self.polys:
             #For each polynomial, make a matrix object, and add its column
             submatrix = pd.DataFrame()
-            sub_np = []
             for idx in poly.grevlex_gen():
                 idx_term = maxheap.TermOrder(tuple(idx)) # Used to get an ordering on terms
-                if not idx_term.val in self.term_set:
-                    self.term_set.add(idx_term.val)
+                if not idx_term.val in self.pd_term_set:
+                    self.pd_term_set.add(idx_term.val)
                     self.label.append(tuple(idx)) # Put the actual tuple of index into a list
                 submatrix[str(idx)] = pd.Series([poly.coeff[tuple(idx)]])
             #Append all submatracies
             self.matrix = self.matrix.append(submatrix)
         pass 
-
 
 
     def _lcm(self,a,b):
@@ -89,8 +151,6 @@ class Grobner(object):
             a_ = MultiCheb(a_coeffs)
         else:
             raise ValueError('Incompatiable polynomials')
-        a1 = a_*a
-        b1 = b_*b
         s = a_ * a - b_ * b
         #self.polys.append(s)
         return s
