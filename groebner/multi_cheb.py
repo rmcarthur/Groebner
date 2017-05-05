@@ -47,94 +47,109 @@ class MultiCheb(object):
         else:
             self.lead_term = lead_term
 
-
-    def next_step(self, current):
+    def check_column_overload(self, max_values, current, column):
         '''
-        Used to calculate next step in the grevlex generator
+        Checks to make sure that we aren't going into the negatives, aka the current value can't ever be greater
+        than the max_values value. We check at the column where we have just added stuff and might have an 
+        overflow
+        Return true if the whole thing is full and needs to increment i again. False otherwise.
         '''
-        for i in range(self.dim-1, 0, -1):
-            i = int(i)
-            if i!= self.dim-1 and current[i] == 0:
-                break
-            elif i!= 0 and  current[i] < self.max_term and current[i-1] > 0:
-                current[i] += 1
-                current[i-1] -= 1
-                return current
+        initial_column = column
+        if(current[column] > max_values[column]):
+            initial_amount = current[column]
+            extra = current[column] - max_values[column]
+            current[column] = max_values[column]
+            while(extra>0):
+                if(column==0):
+                    current[0] += extra
+                    #Sets all the stuff back in the initial row, needed if the while loop is used.
+                    for i in range(0, initial_column):
+                        current[i+1] += current[i]
+                        current[i] = 0
+                    return True
+                else:
+                    column -=1
+                    allowed = max_values[column] - current[column]
+                    if(allowed > extra):
+                        current[column] += extra
+                        extra = 0
+                    else:
+                        current[column] += allowed
+                        extra -= allowed
+            return False
+        else:
+            return False
 
-        if len(current.nonzero()) > 0:
-            ##### This is the problem ######
-            first_z = -1 * next(j for j,v in enumerate(current[::-1]) if v==0) - 1
-            # Finds the first non-zero afte a zero and iterates from there to create the 
-            # Next high state
-            first_nz_after_z = -1*next(i for i,v in enumerate(current[first_z::-1]) if v!=0) -1
-            j = first_z + first_nz_after_z + 1
-            current[j] -= 1
-            current[j+1:] = self._calc_high_state(current[j+1:], self.state_sum-np.sum(current[:j+1]))
-            return current
-        raise ValueError("Condition not covered in step func")
-
-    def grevlex_gen(self, current=None):
+    def degrevlex_gen(self):
         '''
-        yields grevlex ordering co-ordinates in order to find 
+        yields grevlex ordering co-ordinates in order to find
         the leading coefficent
         '''
-        self.state_sum = sum(np.array(self.shape)-1)
-        if current == None:
-            current = np.array(self.shape) -1
-        low_state = self._calc_low_state(current)
-        self.state_sum = np.sum(current)
-        last_i = np.zeros_like(current)
-        last_i[-1] = 1
-        yield current
+        max_values = tuple(self.shape)-np.ones_like(self.shape)
+        base = max_values
+        current = np.zeros(self.dim)
+        yield base-current
         while True:
-            if all(current == last_i):
-                yield np.zeros_like(current)
-                return
-            elif all(current == low_state):
-                #print('Current -- lw_state')
-                #print('State Sum: {}'.format(self.state_sum))
-                #raw_input()
-                self.state_sum -= 1
-                current = self._calc_high_state(current, self.state_sum)
-                low_state = self._calc_low_state(current)
-                yield current
-            else: 
-                current = self.next_step(current)
-                yield current
+            for i in range(1, sum(max_values)+1):
+                onward = True
+                #set the far right column to i
+                current = np.zeros(self.dim)
+                current[self.dim-1] = i
+                #This can't return false, as we start at the begenning. Always has enough room to spill over.
+                self.check_column_overload(max_values, current, self.dim-1)
+                yield base - current
+                while onward:
+                    #Find the leftmost thing
+                    for j in range(0, self.dim):
+                        if(current[j] != 0):
+                            left_most_spot = j
+                            break
+                    if(left_most_spot != 0):
+                        #Slide it to the left
+                        current[left_most_spot] -= 1
+                        current[left_most_spot-1] += 1
+                        yield base - current
+                    elif(current[j] == i):
+                        #Reset it for the next run
+                        current[0] = 0
+                        onward = False
+                    else:
+                        #if I'm at the end push back everything to the next leftmost thing and slide it plus 1
+                        amount = current[0]
+                        for j in range(1,self.dim):
+                            if(current[j] != 0):
+                                next_left_most_spot = j
+                                break
+                        current[0] = 0
+                        current[next_left_most_spot] -= 1
+                        current[next_left_most_spot-1] += amount+1
 
-    def _calc_low_state(self,current):
-        max_term = np.max(self.shape) -1
-        if self.state_sum < max_term:
-            low_state = np.zeros_like(current)
-            low_state[-1] = self.state_sum
-            return low_state
-        else:
-            #print('State sum: {}'.format(self.state_sum))
-            #print('terms: {}'.format(self.dim))
-            #print(self.shape)
-            #raw_input()
-            slots = int(self.state_sum//max_term)
-            remainder = self.state_sum % max_term
-            low_state = np.zeros_like(current)
-            low_state[-slots:] = (self.shape[0]-1)*np.ones(1)
-            if remainder != 0:
-                low_state[-slots - 1] = remainder
-            return low_state.astype(int)
+                        spot_to_check = next_left_most_spot-1
+                        #Loops throught this until everything is balanced all right or we need to increase i
+                        while(self.check_column_overload(max_values, current, spot_to_check)):
+                            new_spot_to_check = -1
+                            for j in range(spot_to_check+1, self.dim):
+                                if(current[j] != 0):
+                                    new_spot_to_check = j
+                                    break
+                            if(new_spot_to_check == -1):
+                                onward = False
+                                break
+                            else:
+                                amount = current[spot_to_check]
+                                current[spot_to_check] = 0
+                                current[new_spot_to_check] -=1
+                                current[new_spot_to_check-1] += (amount+1)
+                                spot_to_check = new_spot_to_check-1
+                        if(onward):
+                            yield base-current
+            return
 
-    def _calc_high_state(self, current, sum_val):
-        max_term = np.max(self.shape) -1
-        slots = int(sum_val//max_term)
-        remainder = sum_val % max_term
-        high_state = np.zeros_like(current)
-        high_state[:slots] = (max_term)*np.ones(1)
-        if remainder != 0:
-            high_state[slots] = remainder
-        return high_state.astype(int)
 
     def update_lead_term(self,start = None):
         #print('Updating Leading Coeff...')
         if self.order == 'grevlex':
-            gen = self.grevlex_gen()
+            gen = self.degrevlex_gen()
             for idx in gen:
                 if self.coeff[tuple(idx)] != 0:
                     self.lead_term = idx

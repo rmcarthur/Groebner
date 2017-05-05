@@ -20,27 +20,15 @@ class Term(object):
         elif sum(self.val) > sum(other.val):
             return False
         else:
-            for i,j in zip(self.val,other.val):
+            for i,j in zip(reversed(self.val),reversed(other.val)):
                 if i<j:
-                    return True
-                if i > j:
                     return False
+                if i > j:
+                    return True
             return False
 
     def __gt__(self, other):
-        if sum(self.val) > sum(other.val):
-            return True
-        elif sum(self.val) < sum(other.val):
-            return False
-        else:
-            for i,j in zip(self.val,other.val):
-                if i > j:
-                    return True
-                if i < j:
-                    return False
-            return False
-
-
+        return not(self < other or self == other)
     def __eq__(self, other):
         if sum(self.val) != sum(other.val):
             return False
@@ -49,6 +37,11 @@ class Term(object):
                 if i != j:
                     return False
             return True
+    def __ge__(self, other):
+        return (self > other or self == other)
+
+    def __le__(self,other):
+        return (self < other or self == other)
 
 class TermOrder(object):
     '''
