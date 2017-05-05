@@ -78,32 +78,36 @@ class Groebner(object):
                 idx_term = maxheap.Term(tuple(idx)) #Get a term object 
                 # Grab each non-zero element, put it into matrix. 
                 coeff_val = p.coeff[idx_term.val] 
-                if coeff_val != 0:
-                    # If already in idx_list
-                    if idx_term.val in self.term_set:
-                        # get index of label and np matrix to put into
-                        idx_where = np.argmax([i == idx_term for i in self.matrix_terms]) 
-                        self.np_matrix[0,idx_where] = coeff_val
 
-                    # If new column needed
+                # If already in idx_list
+                if idx_term.val in self.term_set:
+                    # get index of label and np matrix to put into
+                    idx_where = np.argmax([i == idx_term for i in self.matrix_terms]) 
+                    self.np_matrix[0,idx_where] = coeff_val
+
+                # If new column needed
+                else:
+                    # Make new column
+                    self.term_set.add(idx_term.val)
+                    length_of_mat = self.np_matrix.shape[0]
+                    if length_of_mat == 0:
+                        self.np_matrix = np.zeros((1,1))
                     else:
-                        # Make new column
-                        self.term_set.add(idx_term.val)
-                        length_of_mat = self.np_matrix.shape[0]
-                        if length_of_mat == 0:
-                            self.np_matrix = np.zeros((1,1))
-                        else:
-                            #print(length_of_mat)
-                            #print(np.zeros((1,length_of_mat)))
-                            self.np_matrix = np.hstack((self.np_matrix, np.zeros((1,length_of_mat))))
-                        self.matrix_terms.append(idx_term)
-                        self.np_matrix[0,-1] = coeff_val
+                        #print(length_of_mat)
+                        #print(np.zeros((1,length_of_mat)))
+                        # Make sure and make sizes the same
+                        #print(self.np_matrix)
+                        zeros = np.zeros((length_of_mat,1))
+                        self.np_matrix = np.hstack((self.np_matrix, zeros))
+                    self.matrix_terms.append(idx_term)
+                    self.np_matrix[0,-1] = coeff_val
             zero_poly = np.zeros((1,self.np_matrix.shape[1]))
             self.np_matrix = np.vstack((zero_poly,self.np_matrix))
         self.np_matrix = self.np_matrix[1:,:]
-        print(self.np_matrix)
 
-        
+        argsort_list, self.matrix_terms = self.argsort(self.matrix_terms)
+        self.np_matrix = self.np_matrix[:, argsort_list]
+
 
         # THIS MAKES THE DF NEEDS TO BE REMOVED
         for poly in self.polys:
@@ -119,6 +123,14 @@ class Groebner(object):
             self.matrix = self.matrix.append(submatrix)
         pass 
 
+    def argsort(self, index_list):
+        '''
+        Returns an argsort list for the index, as well as sorts the list in place
+        '''
+        argsort_list = sorted(range(len(index_list)), key=index_list.__getitem__)[::-1]
+        index_list.sort()
+        return argsort_list, index_list[::-1]
+    
 
     def _lcm(self,a,b):
         '''
@@ -138,10 +150,10 @@ class Groebner(object):
         '''
         lcm = self._lcm(a,b)
         a_coeffs = np.zeros_like(a.coeff)
-        a_coeffs[tuple([i-j for i,j in zip(lcm, a.lead_term)])] = 1./(a.coeff[tuple(a.lead_term)])
+        a_coeffs[tuple([i-j for i,j in zip(lcm, a.lead_term)])] = 1.
 
         b_coeffs = np.zeros_like(b.coeff)
-        b_coeffs[tuple([i-j for i,j in zip(lcm, b.lead_term)])] = 1./(b.coeff[tuple(b.lead_term)])
+        b_coeffs[tuple([i-j for i,j in zip(lcm, b.lead_term)])] = 1.
 
         if isinstance(a, MultiPower) and isinstance(b,MultiPower):
             b_ = MultiPower(b_coeffs)
@@ -152,18 +164,13 @@ class Groebner(object):
         else:
             raise ValueError('Incompatiable polynomials')
         s = a_ * a - b_ * b
-        #self.polys.append(s)
         return s
 
     def _coprime(self,a,b):
         '''
-        a,b - ints
-
-        Returns:
-        True if a, b are coprime 
-        False otherwise
+        This is dead wrong, needs to check if they are lcm
         '''
-        return None
+        return False
     
     def add_s_to_matrix(self):
         '''
@@ -171,17 +178,17 @@ class Groebner(object):
         '''
         for a, b in itertools.combinations(self.polys, 2):
             submatrix = pd.DataFrame()
-            if not self._coprime(a.lead_coeff,b.lead_coeff): #Checks for co-prime coeffs
-                s = self.calc_s(a,b) # Calculate the S polynomail
+            #if not self._coprime(a.lead_coeff,b.lead_coeff): #Checks for co-prime coeffs
+            s = self.calc_s(a,b) # Calculate the S polynomail
 
-                for idx in s.grevlex_gen():
-                    idx_term = maxheap.TermOrder(tuple(idx)) # For each term in polynomial, throw it on the heap
-                    if not idx_term.val in self.term_set: # Add all new polynomials
-                        self.term_set.add(idx_term.val)
-                        self.label.append(tuple(idx))
-                        if idx_term > self.largest_mon:
-                            self.largest_mon = idx_term
-                    submatrix[str(idx)] = pd.Series([s.coeff[tuple(idx)]]) 
+            for idx in s.grevlex_gen():
+                idx_term = maxheap.TermOrder(tuple(idx)) # For each term in polynomial, throw it on the heap
+                if not idx_term.val in self.term_set: # Add all new polynomials
+                    self.term_set.add(idx_term.val)
+                    self.label.append(tuple(idx))
+                    if idx_term > self.largest_mon:
+                        self.largest_mon = idx_term
+                submatrix[str(idx)] = pd.Series([s.coeff[tuple(idx)]]) 
             self.matrix = self.matrix.append(submatrix)
             self.matrix = self.matrix.fillna(0)
             self.fs_len = len(self.matrix.index)
