@@ -39,10 +39,10 @@ class Groebner(object):
 
             self._build_matrix()
             self.add_s_to_matrix()
-	    self.matrix = self.matrix.loc[:, (self.matrix != 0).any(axis=0)]
+            self.matrix = self.matrix.loc[:, (self.matrix != 0).any(axis=0)]
 
             self.add_r_to_matrix()
-	    self.matrix = self.matrix.loc[:, (self.matrix != 0).any(axis=0)]
+            self.matrix = self.matrix.loc[:, (self.matrix != 0).any(axis=0)]
 
 
             # Flip due to bad ordering in grevlex generator
