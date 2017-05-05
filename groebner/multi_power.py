@@ -29,7 +29,7 @@ class MultiPower(Polynomial):
         output- the next step in ordering
     """
 
-    def __init__(self, coeff, order='grevlex', lead_term=None):
+    def __init__(self, coeff, order='degrevlex', lead_term=None):
         super(MultiPower, self).__init__(coeff, order, lead_term)
 
     def __add__(self,other):
