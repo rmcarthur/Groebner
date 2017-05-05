@@ -201,3 +201,9 @@ class MultiPower(object):
         '''
         return MultiPower(fftconvolve(self.coeff, other.coeff))
 
+    def mon_mult(M,P):
+        tuple1 = []
+        for i in M:
+            list1 = (i,0)
+            tuple1.append(list1)
+        return(np.pad(P, (tuple1), 'constant', constant_values = 0))
