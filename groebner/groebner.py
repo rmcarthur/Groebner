@@ -55,6 +55,37 @@ class Groebner(object):
             #P_argmax = np.argmax(P,axis=0) 
 
 
+    def _add_poly_to_matrix(self,p):
+        '''
+        Takes in a single polynomial and adds it to the state matrix
+        '''
+        for idx in p.grevlex_gen(): 
+            idx_term = maxheap.Term(tuple(idx)) #Get a term object 
+            # Grab each non-zero element, put it into matrix. 
+            coeff_val = p.coeff[idx_term.val] 
+
+            # If already in idx_list
+            if idx_term.val in self.term_set:
+                # get index of label and np matrix to put into
+                idx_where = np.argmax([i == idx_term for i in self.matrix_terms]) 
+                self.np_matrix[0,idx_where] = coeff_val
+
+            # If new column needed
+            else:
+                # Make new column
+                self.term_set.add(idx_term.val)
+                length_of_mat = self.np_matrix.shape[0]
+                if length_of_mat == 0:
+                    self.np_matrix = np.zeros((1,1))
+                else:
+                    zeros = np.zeros((length_of_mat,1))
+                    self.np_matrix = np.hstack((self.np_matrix, zeros))
+                self.matrix_terms.append(idx_term)
+                self.np_matrix[0,-1] = coeff_val
+        zero_poly = np.zeros((1,self.np_matrix.shape[1]))
+        self.np_matrix = np.vstack((zero_poly,self.np_matrix))
+        pass
+
     def _add_polys(self, p_list):
         '''
         Adds a single polynomial to the state matrix
@@ -69,40 +100,8 @@ class Groebner(object):
         self.np_matrix = np.array([[]])
         for p in p_list:
             # Add a zero row for this polynomial
-            #print('Current np_matrix vals: \n{}'.format(self.np_matrix))
-            #print('Adding poly:\n {}'.format(p.coeff))
+            self._add_poly_to_matrix(p)
 
-            # Sorting by grevlex just gurantees we get all elements
-            # Change it to start at the leading term
-            for idx in p.grevlex_gen(): 
-                idx_term = maxheap.Term(tuple(idx)) #Get a term object 
-                # Grab each non-zero element, put it into matrix. 
-                coeff_val = p.coeff[idx_term.val] 
-
-                # If already in idx_list
-                if idx_term.val in self.term_set:
-                    # get index of label and np matrix to put into
-                    idx_where = np.argmax([i == idx_term for i in self.matrix_terms]) 
-                    self.np_matrix[0,idx_where] = coeff_val
-
-                # If new column needed
-                else:
-                    # Make new column
-                    self.term_set.add(idx_term.val)
-                    length_of_mat = self.np_matrix.shape[0]
-                    if length_of_mat == 0:
-                        self.np_matrix = np.zeros((1,1))
-                    else:
-                        #print(length_of_mat)
-                        #print(np.zeros((1,length_of_mat)))
-                        # Make sure and make sizes the same
-                        #print(self.np_matrix)
-                        zeros = np.zeros((length_of_mat,1))
-                        self.np_matrix = np.hstack((self.np_matrix, zeros))
-                    self.matrix_terms.append(idx_term)
-                    self.np_matrix[0,-1] = coeff_val
-            zero_poly = np.zeros((1,self.np_matrix.shape[1]))
-            self.np_matrix = np.vstack((zero_poly,self.np_matrix))
         self.np_matrix = self.np_matrix[1:,:]
 
         argsort_list, self.matrix_terms = self.argsort(self.matrix_terms)
