@@ -27,22 +27,20 @@ class Groebner(object):
         self.pd_term_set = set()
         self.term_dict = {}
 
-
         #np objects
         self.matrix_terms = [] #Instantiate  here?
         self.np_matrix = np.array([[]])
-
         self._add_polys(polys)
-
+    
     def solve(self):
         while True:
 
             self._build_matrix()
             self.add_s_to_matrix()
-	    self.matrix = self.matrix.loc[:, (self.matrix != 0).any(axis=0)]
+            self.matrix = self.matrix.loc[:, (self.matrix != 0).any(axis=0)]
 
             self.add_r_to_matrix()
-	    self.matrix = self.matrix.loc[:, (self.matrix != 0).any(axis=0)]
+            self.matrix = self.matrix.loc[:, (self.matrix != 0).any(axis=0)]
 
 
             # Flip due to bad ordering in grevlex generator
@@ -59,9 +57,10 @@ class Groebner(object):
         '''
         Takes in a single polynomial and adds it to the state matrix
         '''
-        for idx in p.grevlex_gen(): 
+        for idx in p.degrevlex_gen(): 
             idx_term = maxheap.Term(tuple(idx)) #Get a term object 
             # Grab each non-zero element, put it into matrix. 
+            idx_term.val = tuple(map(lambda i: int(i), idx_term.val))
             coeff_val = p.coeff[idx_term.val] 
 
             # If already in idx_list
@@ -108,18 +107,19 @@ class Groebner(object):
         self.np_matrix = self.np_matrix[:, argsort_list]
 
 
-        # THIS MAKES THE DF NEEDS TO BE REMOVED
-        for poly in self.polys:
-            #For each polynomial, make a matrix object, and add its column
-            submatrix = pd.DataFrame()
-            for idx in poly.grevlex_gen():
-                idx_term = maxheap.TermOrder(tuple(idx)) # Used to get an ordering on terms
-                if not idx_term.val in self.pd_term_set:
-                    self.pd_term_set.add(idx_term.val)
-                    self.label.append(tuple(idx)) # Put the actual tuple of index into a list
-                submatrix[str(idx)] = pd.Series([poly.coeff[tuple(idx)]])
-            #Append all submatracies
-            self.matrix = self.matrix.append(submatrix)
+        ## THIS MAKES THE DF NEEDS TO BE REMOVED
+        #for poly in self.polys:
+        #    #For each polynomial, make a matrix object, and add its column
+        #    submatrix = pd.DataFrame()
+        #    for idx in poly.degrevlex_gen():
+        #        idx_term = maxheap.TermOrder(tuple(idx)) # Used to get an ordering on terms
+        #        if not idx_term.val in self.pd_term_set:
+        #            self.pd_term_set.add(idx_term.val)
+        #            self.label.append(tuple(idx)) # Put the actual tuple of index into a list
+
+        #        submatrix[str(idx)] = pd.Series([poly.coeff[tuple(idx)]])
+        #    #Append all submatracies
+        #    self.matrix = self.matrix.append(submatrix)
         pass 
 
     def argsort(self, index_list):
@@ -146,6 +146,7 @@ class Groebner(object):
     def calc_s(self,a,b):
         '''
         Calculates the S-polynomial of a,b
+        #TODO Fix so it works with things of different size
         '''
         lcm = self._lcm(a,b)
         a_coeffs = np.zeros_like(a.coeff)
@@ -154,7 +155,7 @@ class Groebner(object):
         b_coeffs = np.zeros_like(b.coeff)
         b_coeffs[tuple([i-j for i,j in zip(lcm, b.lead_term)])] = 1.
 
-        if isinstance(a, MultiPower) and isinstance(b,MultiPower):
+        if isinstance(a, MultiPower) and isinstance(b, MultiPower):
             b_ = MultiPower(b_coeffs)
             a_ = MultiPower(a_coeffs)
         elif isinstance(a, MultiCheb) and isinstance(b,MultiCheb):
@@ -162,7 +163,12 @@ class Groebner(object):
             a_ = MultiCheb(a_coeffs)
         else:
             raise ValueError('Incompatiable polynomials')
+        print(a_coeffs)
+        print(b_coeffs)
+        
         s = a_ * a - b_ * b
+        #self.polys.append(s)
+        print(s.coeff)
         return s
 
     def _coprime(self,a,b):
@@ -195,7 +201,7 @@ class Groebner(object):
 
     def add_poly_to_matrix(self,p):
         submatrix = pd.DataFrame()
-        for idx in p.grevlex_gen():
+        for idx in p.degrevlex_gen():
             submatrix[str(idx)] = pd.Series([p.coeff[tuple(idx)]])
         self.matrix = self.matrix.append(submatrix)
         self.matrix = self.matrix.fillna(0)

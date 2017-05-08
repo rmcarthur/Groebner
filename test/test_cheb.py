@@ -1,6 +1,7 @@
 import numpy as np
 import os, sys
 sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]))
+sys.path.append("../groebner")
 from groebner.multi_cheb import MultiCheb
 import unittest
 
