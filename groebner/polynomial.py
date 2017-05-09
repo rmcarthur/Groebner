@@ -122,10 +122,10 @@ class Polynomial(object):
             return
 
     def update_lead_term(self,start = None):
-        #print('Updating Leading Coeff...')
         if self.order == 'degrevlex':
             gen = self.degrevlex_gen()
             for idx in gen:
+                idx = tuple(map(lambda i: int(i), idx))
                 if self.coeff[tuple(idx)] != 0:
                     self.lead_term = idx
                     self.lead_coeff = self.coeff[tuple(idx)]
