@@ -3,7 +3,7 @@ import os, sys
 sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]))
 sys.path.append("../groebner")
 from groebner.multi_power import MultiPower
-from groebner.groebner import Grobner
+from groebner.groebner import Groebner
 import unittest
 
 class TestGrobner(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestGrobner(unittest.TestCase):
         a3 = np.array([[0,1,0,0],[0,0,1,0],[-2,0,0,0],[0,0,0,0]])
         c2 = MultiPower(a2.T)
         c3 = MultiPower(a3.T)
-        grob = Grobner([c2,c3])
+        grob = Groebner([c2,c3])
         s1 = np.round(grob.calc_s(c2,c3).coeff)
         true_s = np.array([[0,0,0,0],[1,0,0,0],[0,0,0,0],[0,0,0,0]])
         self.assertTrue(s1.all() == true_s.all())
