@@ -30,20 +30,30 @@ class MultiCheb(Polynomial):
         output- the next step in ordering
     """
 
-    def __init__(self, coeff, order='grevlex', lead_term=None):
+    def __init__(self, coeff, order='degrevlex', lead_term=None):
         super(MultiCheb, self).__init__(coeff, order, lead_term)
+
 
     def __add__(self,other):
         '''
         Here we add an addition method
         '''
-        return MultiCheb(self.coeff + other.coeff)
+        if self.shape != other.shape:
+            new_self, new_other = self.match_size(self,other)
+        else:
+            new_self, new_other = self, other
+
+        return MultiCheb(new_self.coeff + new_other.coeff)
 
     def __sub__(self,other):
         '''
         Here we subtract the two polys coeffs
         '''
-        return MultiCheb(self.coeff - other.coeff)
+        if self.shape != other.shape:
+            new_self, new_other = self.match_size(self,other)
+        else:
+            new_self, new_other = self, other
+        return MultiCheb(new_self.coeff - new_other.coeff)
 
 
     def match_size(self,a,b):

@@ -2,7 +2,6 @@ from __future__ import print_function, division
 import fractions
 import itertools
 import numpy as np
-import pandas as pd
 import maxheap
 import os,sys
 from multi_cheb import MultiCheb
@@ -19,12 +18,10 @@ class Groebner(object):
         self.polys = polys
         self.f_len = len(polys)
         self.largest_mon = maxheap.TermOrder(tuple((0,0)))
-        self.matrix = pd.DataFrame()
         self.label = [] # want to drop this
         self.label_count = 0 # and this
         self.np_matrix = np.zeros([0,0]) # and this
         self.term_set = set()
-        self.pd_term_set = set()
         self.term_dict = {}
 
         #np objects
@@ -105,21 +102,6 @@ class Groebner(object):
 
         argsort_list, self.matrix_terms = self.argsort(self.matrix_terms)
         self.np_matrix = self.np_matrix[:, argsort_list]
-
-
-        ## THIS MAKES THE DF NEEDS TO BE REMOVED
-        #for poly in self.polys:
-        #    #For each polynomial, make a matrix object, and add its column
-        #    submatrix = pd.DataFrame()
-        #    for idx in poly.degrevlex_gen():
-        #        idx_term = maxheap.TermOrder(tuple(idx)) # Used to get an ordering on terms
-        #        if not idx_term.val in self.pd_term_set:
-        #            self.pd_term_set.add(idx_term.val)
-        #            self.label.append(tuple(idx)) # Put the actual tuple of index into a list
-
-        #        submatrix[str(idx)] = pd.Series([poly.coeff[tuple(idx)]])
-        #    #Append all submatracies
-        #    self.matrix = self.matrix.append(submatrix)
         pass 
 
     def argsort(self, index_list):
@@ -146,7 +128,6 @@ class Groebner(object):
     def calc_s(self,a,b):
         '''
         Calculates the S-polynomial of a,b
-        #TODO Fix so it works with things of different size
         '''
         lcm = self._lcm(a,b)
         a_coeffs = np.zeros_like(a.coeff)
@@ -155,6 +136,12 @@ class Groebner(object):
         b_coeffs = np.zeros_like(b.coeff)
         b_coeffs[tuple([i-j for i,j in zip(lcm, b.lead_term)])] = 1.
 
+        print(type(MultiPower))
+        print(type(a))
+        #print(isinstance(a, MultiPower), isinstance(b, MultiPower))
+        print(isinstance(a,MultiPower))
+        print(isinstance(a,MultiCheb))
+        print(type(a) == type(b))
         if isinstance(a, MultiPower) and isinstance(b, MultiPower):
             b_ = MultiPower(b_coeffs)
             a_ = MultiPower(a_coeffs)
@@ -163,17 +150,13 @@ class Groebner(object):
             a_ = MultiCheb(a_coeffs)
         else:
             raise ValueError('Incompatiable polynomials')
-        print(a_coeffs)
-        print(b_coeffs)
         
         s = a_ * a - b_ * b
-        #self.polys.append(s)
-        print(s.coeff)
         return s
 
     def _coprime(self,a,b):
         '''
-        This is dead wrong, needs to check if they are lcm
+        needs to check if they are lcm
         '''
         return False
     
@@ -182,50 +165,66 @@ class Groebner(object):
         This takes all possible combinaions of s polynomials and adds them to the Grobner Matrix
         '''
         for a, b in itertools.combinations(self.polys, 2):
-            submatrix = pd.DataFrame()
             #if not self._coprime(a.lead_coeff,b.lead_coeff): #Checks for co-prime coeffs
-            s = self.calc_s(a,b) # Calculate the S polynomail
 
-            for idx in s.grevlex_gen():
-                idx_term = maxheap.TermOrder(tuple(idx)) # For each term in polynomial, throw it on the heap
-                if not idx_term.val in self.term_set: # Add all new polynomials
-                    self.term_set.add(idx_term.val)
-                    self.label.append(tuple(idx))
-                    if idx_term > self.largest_mon:
-                        self.largest_mon = idx_term
-                submatrix[str(idx)] = pd.Series([s.coeff[tuple(idx)]]) 
-            self.matrix = self.matrix.append(submatrix)
-            self.matrix = self.matrix.fillna(0)
-            self.fs_len = len(self.matrix.index)
-            pass
+            # Calculate the S polynomail
+            s = self.calc_s(a,b) 
 
-    def add_poly_to_matrix(self,p):
-        submatrix = pd.DataFrame()
-        for idx in p.degrevlex_gen():
-            submatrix[str(idx)] = pd.Series([p.coeff[tuple(idx)]])
-        self.matrix = self.matrix.append(submatrix)
-        self.matrix = self.matrix.fillna(0)
+            # Add it to np_matrix
+            self._add_poly_to_matrix(s)
+
+        argsort_list, self.matrix_terms = self.argsort(self.matrix_terms)
+        self.np_matrix = self.np_matrix[:, argsort_list]
+        pass
+
+
+
+    def _build_maxheap(self):
+        '''
+        Builds a maxheap for use in r polynomial calculation
+        '''
+        self.monheap = maxheap.MaxHeap()
+        for mon in self.term_set:
+            self.monheap.heappush(mon)
         pass
 
     def add_r_to_matrix(self):
         '''
         Makes Heap out of all monomials, and finds lcms to add them into the matrix
         '''
-        for monomial in self.term_set:
-            m = list(monomial)
+        self._build_maxheap()
+        while len(self.monheap) > 0:
+            m = list(self.monheap.heappop())
+            #for monomial in self.term_set:
+            #m = list(monomial)
+            #print("M: ", m)
             for p in self.polys:
                 l = list(p.lead_term)
+                #print("L: ",l)
                 if all([i<=j for i,j in zip(l,m)]) and len(l) == len(m):
                     c = [j-i for i,j in zip(l,m)]
-                    c_coeff = np.zeros(np.array(self.largest_mon.val)+1)
+                    #print(c)
+                    c_coeff = np.zeros(np.array(self.matrix_terms[0].val)+1)
                     c_coeff[tuple(c)] = 1 
                     if isinstance(p, MultiCheb):
                         c = MultiCheb(c_coeff)
                     elif isinstance(p,MultiPower):
                         c = MultiPower(c_coeff)
                     r = c*p
-                    self.add_poly_to_matrix(r)
+                    self._add_poly_to_matrix(r)
+                else:
+                    #print('Bad i,j or length')
                     break
+
+        # Resort according to monomial ordering
+        argsort_list, self.matrix_terms = self.argsort(self.matrix_terms)
+        self.np_matrix = self.np_matrix[:, argsort_list]
+
+        # Remove all zero polynomials, and monomials with no elements in them
+        non_zero_mon = abs(np.sum(self.np_matrix, axis=0))!=0
+        self.np_matrix = self.np_matrix[:,non_zero_mon]
+        non_zero_poly = abs(np.sum(self.np_matrix,axis=1))!=0
+        self.np_matrix = self.np_matrix[non_zero_poly,:]
         pass 
 
 
