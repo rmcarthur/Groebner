@@ -19,17 +19,14 @@ class Groebner(object):
         self.new_polys = polys
         self.f_len = len(polys)
         self.largest_mon = maxheap.TermOrder(tuple((0,0)))
-        self.label = [] # want to drop this
-        self.label_count = 0 # and this
         self.np_matrix = np.zeros([0,0]) # and this
         self.term_set = set()
         self.term_dict = {}
 
         # Check polynomial types
-        print([type(p) == MultiPower for p in polys])
-        if all([type(p) == MultiPower for p in polys]):
+        if all([type(p) == MultiPower for p in self.new_polys]):
             self.power = True
-        elif all([type(p) == MultiCheb for p in polys]):
+        elif all([type(p) == MultiCheb for p in self.new_polys]):
             self.power = False
         else:
             raise ValueError('Bad polynomials in list')
@@ -37,7 +34,7 @@ class Groebner(object):
         #np objects
         self.matrix_terms = [] #Instantiate  here?
         self.np_matrix = np.array([[]])
-        self._add_polys(polys)
+        self._add_polys(self.new_polys)
     
     def solve(self):
         polys_added = True
@@ -51,14 +48,6 @@ class Groebner(object):
             self.matrix = self.matrix.loc[:, (self.matrix != 0).any(axis=0)]
 
             polys_added = self.reduce(self)
-            # Flip due to bad ordering in grevlex generator
-
-            # Put correct order on table
-
-            # Put R on top for reduction
-
-            #P,L,U = lu(new_mat)
-            #P_argmax = np.argmax(P,axis=0) 
 
     def sm_to_poly(self,idxs):
         '''
@@ -257,7 +246,6 @@ class Groebner(object):
         pass 
     
     def reduce_matrix(self, qr_decomposition=True):
-        print(self.np_matrix)
         di={}
         for i, j in zip(*np.where(self.np_matrix!=0)):
             if i in di:
@@ -273,8 +261,6 @@ class Groebner(object):
             P,L,U = lu(self.np_matrix)
             reduced_matrix = U
         
-        print(reduced_matrix)
-        
         good_poly_spots = list()
         already_looked_at = set()
         for i, j in zip(*np.where(reduced_matrix!=0)):
@@ -287,14 +273,12 @@ class Groebner(object):
                 already_looked_at.add(i)
                 good_poly_spots.append(i)
 
-        print(good_poly_spots)
-        
         self.old_polys = self.new_polys + self.old_polys
         self.new_polys = list()
         if(len(good_poly_spots) ==0):
             return False
         else:
-            #self.new_polys = self.sm_to_poly(self, good_poly_spots)
+            self.new_polys = self.sm_to_poly(self, good_poly_spots)
             return True
 
 
