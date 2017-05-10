@@ -1,7 +1,7 @@
 import numpy as np
 import os, sys
-sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]))
-from groebner.maxheap import MaxHeap
+sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
+from maxheap import MaxHeap
 import pytest
 
 
