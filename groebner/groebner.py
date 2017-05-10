@@ -153,7 +153,52 @@ class Groebner(object):
         
         s = a_ * a - b_ * b
         return s
-
+    
+    def calc_phi(self,a,b):
+    	'''Calculates the phi-polynomial's of the polynomials a and b.
+    	 
+    	Returns:
+    		A tuple of the calculated phi's. 
+    	'''
+    	lcm = self._lcm(a,b)
+    	a_coeffs = np.zeros_like(a.coeff)
+    	a_coeffs[tuple([i-j for i,j in zip(lcm, a.lead_term)])] = 1.
+    	
+    	b_coeffs = np.zeros_like(b.coeff)
+    	b_coeffs[tuple([i-j for i,j in zip(lcm,b.lead_term)])] = 1. 
+    	
+    	if isinstance(a, MultiPower) and isinstance(b, MultiPower):
+    		b_ = MultiPower(b_coeffs)
+    		a_ = MultiPower(a_coeffs)
+    	elif isinstance(a, MultiPower) and isinstance(b, MultiCheb):
+    		b_ = MultiCheb(b_coeffs)
+    		a_ = MultiCheb(a_coeffs)
+    	
+    	return a_*a, b_*b
+    
+    def add_phi_to_matrix(self,new_f,old_f):
+    	'''
+    	Takes all new possible combinations of phi polynomials and adds them to the Groebner Matrix
+    	
+    	Parameters: 
+    	new_f (list) : a list that consists of newly generated list polynomials to added to f.
+    	old_f (list) : a list of polynomials already in f. 
+    	'''
+    	
+    	for i,j in itertools.combinations(new_f+old_f,2):
+    		# This prevents calculation of phi with combinations of old_f exclusively. (Not the most efficient right now.)
+    		if i not in old_f: 
+    			# Calculate the phi's.
+    			p_a , p_b = self.calc_phi(i,j)
+    			# Add the phi's on to the Groebner Matrix. 
+    			self._add_poly_to_matrix(p_a)
+    			self._add_poly_to_matrix(p_b)
+    			
+    	# Sorts the matrix. 
+    	argsort_list, self.matrix_terms = self.argsort(self.matrix_terms)
+    	self.np_matrix = self.np_matrix[:,argsort_lists]
+    	pass
+    	
     def _coprime(self,a,b):
         '''
         needs to check if they are lcm
