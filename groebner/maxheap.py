@@ -1,6 +1,48 @@
 import numpy as np
 import heapq
 
+class Term(object):
+    '''
+    Allows an ordering on tuples according to grevlex 
+    Used in making the heap object, to pop off the max monomial
+    '''
+    def __init__(self,tuple_val):
+        self.val = tuple_val
+
+    def __str__(self):
+        return str(self.val)
+
+    def __lt__(self, other):
+        '''
+        '''
+        if sum(self.val) < sum(other.val):
+            return True
+        elif sum(self.val) > sum(other.val):
+            return False
+        else:
+            for i,j in zip(reversed(self.val),reversed(other.val)):
+                if i<j:
+                    return False
+                if i > j:
+                    return True
+            return False
+
+    def __gt__(self, other):
+        return not(self < other or self == other)
+    def __eq__(self, other):
+        if sum(self.val) != sum(other.val):
+            return False
+        else:
+            for i,j in zip(self.val, other.val):
+                if i != j:
+                    return False
+            return True
+    def __ge__(self, other):
+        return (self > other or self == other)
+
+    def __le__(self,other):
+        return (self < other or self == other)
+
 class TermOrder(object):
     '''
     Allows an ordering on tuples according to grevlex 
