@@ -1,0 +1,4 @@
+{
+  "test_cheb.py::test_mult_diff": true,
+  "test_grobner.py::test_s_poly": true
+}
