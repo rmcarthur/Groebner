@@ -1,7 +1,7 @@
 from __future__ import division, print_function
 import numpy as np
 from scipy.signal import convolve, fftconvolve
-from groebner.polynomial import Polynomial
+from polynomial import Polynomial
 
 """
 1/11/17
