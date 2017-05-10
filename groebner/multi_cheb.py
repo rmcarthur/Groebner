@@ -2,7 +2,7 @@ from __future__ import division, print_function
 import numpy as np
 from scipy.signal import fftconvolve, convolve
 import itertools
-from polynomial import Polynomial
+from groebner.polynomial import Polynomial
 
 """
 08/31/17
