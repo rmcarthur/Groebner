@@ -1,5 +1,4 @@
-from __future__ import print_function, division
-import fractions
+from operator import itemgetter
 import itertools
 import numpy as np
 import maxheap
@@ -23,6 +22,15 @@ class Groebner(object):
         self.np_matrix = np.zeros([0,0]) # and this
         self.term_set = set()
         self.term_dict = {}
+
+        # Check polynomial types
+        print([type(p) == MultiPower for p in polys])
+        if all([type(p) == MultiPower for p in polys]):
+            self.power = True
+        elif all([type(p) == MultiCheb for p in polys]):
+            self.power = False
+        else:
+            raise ValueError('Bad polynomials in list')
 
         #np objects
         self.matrix_terms = [] #Instantiate  here?
@@ -49,6 +57,32 @@ class Groebner(object):
             #P,L,U = lu(new_mat)
             #P_argmax = np.argmax(P,axis=0) 
 
+    def sm_to_poly(self,idxs):
+        '''
+        Takes a list of indicies corresponding to the rows of the state matrix and 
+        returns a list of polynomial objects
+        '''
+        shape = []
+        p_list = []
+        matrix_term_vals = [i.val for i in self.matrix_terms]
+
+        # Finds the maximum size needed for each of the poly coeff tensors
+        for i in range(len(matrix_term_vals[0])):
+            # add 1 to each to compensate for constant term
+            shape.append(max(matrix_term_vals, key=itemgetter(i))[i]+1)
+
+        # Grabs each polynomial, makes coeff matrix and constructs object
+        for i in idxs:
+            p = self.np_matrix[i]
+            coeff = np.zeros(shape)
+            for i,term in enumerate(matrix_term_vals):
+                coeff[term] = p[i]
+            if self.power:
+                poly = MultiPower(coeff)
+            else:
+                poly = MultiCheb(coeff)
+            p_list.append(poly)
+        return p_list
 
     def _add_poly_to_matrix(self,p):
         '''
@@ -84,10 +118,7 @@ class Groebner(object):
 
     def _add_polys(self, p_list):
         '''
-        Adds a single polynomial to the state matrix
-        If an index doesn't exist yet, it adds a new column of zeros, to be sorted at the end
-        params:
-        p - a single polynomial object
+        p_list - a list of polynomial object
 
         sets self.matrix to the appropriate matrix
         
@@ -133,15 +164,10 @@ class Groebner(object):
         a_coeffs = np.zeros_like(a.coeff)
         a_coeffs[tuple([i-j for i,j in zip(lcm, a.lead_term)])] = 1.
 
+
         b_coeffs = np.zeros_like(b.coeff)
         b_coeffs[tuple([i-j for i,j in zip(lcm, b.lead_term)])] = 1.
 
-        print(type(MultiPower))
-        print(type(a))
-        #print(isinstance(a, MultiPower), isinstance(b, MultiPower))
-        print(isinstance(a,MultiPower))
-        print(isinstance(a,MultiCheb))
-        print(type(a) == type(b))
         if isinstance(a, MultiPower) and isinstance(b, MultiPower):
             b_ = MultiPower(b_coeffs)
             a_ = MultiPower(a_coeffs)
