@@ -25,7 +25,6 @@ class Groebner(object):
 
         # Check polynomial types
 
-        print([type(p) for p in self.new_polys])
         #print([type(p) == groebner.multi_power.MultiPower for p in self.new_polys])
         if all([type(p) == MultiPower for p in self.new_polys]):
             self.power = True

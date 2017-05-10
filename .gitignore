@@ -1,10 +1,7 @@
 *.pyc
 *.swp
 *.py~ 
-groebner/Untitled.ipynb
-groebner/dev.py
-groebner/RexTest.ipynb
-groebner/Test.ipynb
+*.ipynb
 pytest/htmlcov
-pytest/Sage
+pytest/.cache
 
