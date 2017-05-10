@@ -1,11 +1,12 @@
 from operator import itemgetter
 import itertools
 import numpy as np
-import maxheap
+import groebner.maxheap as maxheap
 import os,sys
-from multi_cheb import MultiCheb
-from multi_power import MultiPower
+from groebner.multi_cheb import MultiCheb
+from groebner.multi_power import MultiPower
 from scipy.linalg import lu
+from numpy.linalg import qr
 
 class Groebner(object):
 
@@ -14,7 +15,8 @@ class Groebner(object):
         polys -- a list of polynomials that generate your ideal
         self.org_len - Orginal length of the polys passed in
         '''
-        self.polys = polys
+        self.old_polys = list()
+        self.new_polys = polys
         self.f_len = len(polys)
         self.largest_mon = maxheap.TermOrder(tuple((0,0)))
         self.label = [] # want to drop this
@@ -38,7 +40,8 @@ class Groebner(object):
         self._add_polys(polys)
     
     def solve(self):
-        while True:
+        polys_added = True
+        while polys_added:
 
             self._build_matrix()
             self.add_s_to_matrix()
@@ -47,7 +50,7 @@ class Groebner(object):
             self.add_r_to_matrix()
             self.matrix = self.matrix.loc[:, (self.matrix != 0).any(axis=0)]
 
-
+            polys_added = self.reduce(self)
             # Flip due to bad ordering in grevlex generator
 
             # Put correct order on table
@@ -154,7 +157,7 @@ class Groebner(object):
         returns:
         LCM - the np.array of the lead_term of the lcm polynomial
         '''
-        return np.maximum(a.lead_term, b.lead_term)
+        return np.maximum(a.lead_term, b.lead_term)        
     
     def calc_s(self,a,b):
         '''
@@ -252,6 +255,48 @@ class Groebner(object):
         non_zero_poly = abs(np.sum(self.np_matrix,axis=1))!=0
         self.np_matrix = self.np_matrix[non_zero_poly,:]
         pass 
+    
+    def reduce_matrix(self, qr_decomposition=True):
+        print(self.np_matrix)
+        di={}
+        for i, j in zip(*np.where(self.np_matrix!=0)):
+            if i in di:
+                continue
+            else:
+                di[i]=j
+        old_lms = set(di.values())
+        
+        if qr_decomposition:
+            Q,R = qr(self.np_matrix)
+            reduced_matrix = R
+        else:
+            P,L,U = lu(self.np_matrix)
+            reduced_matrix = U
+        
+        print(reduced_matrix)
+        
+        good_poly_spots = list()
+        already_looked_at = set()
+        for i, j in zip(*np.where(reduced_matrix!=0)):
+            if i in already_looked_at:
+                continue
+            elif j in old_lms:
+                already_looked_at.add(i)
+                continue
+            else:
+                already_looked_at.add(i)
+                good_poly_spots.append(i)
+
+        print(good_poly_spots)
+        
+        self.old_polys = self.new_polys + self.old_polys
+        self.new_polys = list()
+        if(len(good_poly_spots) ==0):
+            return False
+        else:
+            #self.new_polys = self.sm_to_poly(self, good_poly_spots)
+            return True
+
 
 
 
