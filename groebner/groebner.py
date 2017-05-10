@@ -2,10 +2,10 @@ from __future__ import print_function, division
 import fractions
 import itertools
 import numpy as np
-import groebner.maxheap as maxheap
+import maxheap
 import os,sys
-from groebner.multi_cheb import MultiCheb
-from groebner.multi_power import MultiPower
+from multi_cheb import MultiCheb
+from multi_power import MultiPower
 from scipy.linalg import lu
 from numpy.linalg import qr
 
@@ -260,7 +260,7 @@ class Groebner(object):
             else:
                 already_looked_at.add(i)
                 good_poly_spots.append(i)
-
+        
         print(good_poly_spots)
         
         self.old_polys = self.new_polys + self.old_polys
