@@ -1,10 +1,11 @@
 from __future__ import division, print_function
 import sys, os
 import numpy as np
-from multi_cheb import MultiCheb
-from multi_power import MultiPower
-from groebner import Grobner
-from groebner import maxheap
+sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]))
+from groebner.multi_cheb import MultiCheb
+from groebner.polys.multi_power import MultiPower
+from groebner.grobner.grobner import Grobner
+from groebner.grobner import maxheap
 
 
 
@@ -26,7 +27,7 @@ grob.add_s_to_matrix()
 #print('mat')
 #print(grob.matrix)
 grob.add_r_to_matrix()
-print(grob.matrix)
+#print(grob.matrix)
 #
 #a3 = np.array([[0,0],[0,1]])
 #a4 = np.array([[0,1],[0,0]])
