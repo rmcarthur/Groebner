@@ -17,7 +17,6 @@ class Polynomial(object):
         self.order = order
         self.shape = self.coeff.shape
         self.max_term = np.max(self.shape) -1
-
         if lead_term is None:
             self.update_lead_term()
         else:
@@ -122,6 +121,7 @@ class Polynomial(object):
             return
 
     def update_lead_term(self,start = None):
+        found = False
         if self.order == 'degrevlex':
             gen = self.degrevlex_gen()
             for idx in gen:
@@ -129,5 +129,9 @@ class Polynomial(object):
                 if self.coeff[tuple(idx)] != 0:
                     self.lead_term = idx
                     self.lead_coeff = self.coeff[tuple(idx)]
+                    found = True
                     break
+        if not found:
+            self.lead_term = None
+            self.lead_coeff = 0
         #print('Leading Coeff is {}'.format(self.lead_term))
