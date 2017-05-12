@@ -45,8 +45,8 @@ class Groebner(object):
         polys_added = True
         while polys_added:
             print("Starting Loop")
-            for poly in self.new_polys+self.old_polys:
-                print(poly.coeff)
+            #for poly in self.new_polys+self.old_polys:
+            #    print(poly.coeff)
             self.matrix_terms = [] #Instantiate  here?
             self.np_matrix = np.array([[]])
             self.term_set = set()
@@ -65,10 +65,12 @@ class Groebner(object):
             self.add_r_to_matrix()
             print(self.np_matrix.shape)
             print(len(self.matrix_terms))
-            polys_added = self.reduce_matrix(qr_decomposition=False)
+            polys_added = self.reduce_matrix()
         print("WE WIN")
+        for poly in self.old_polys:
+            print(poly.coeff)
 
-    def sm_to_poly(self,idxs):
+    def sm_to_poly(self,idxs,reduced_matrix):
         '''
         Takes a list of indicies corresponding to the rows of the state matrix and 
         returns a list of polynomial objects
@@ -87,7 +89,7 @@ class Groebner(object):
 
         # Grabs each polynomial, makes coeff matrix and constructs object
         for i in idxs:
-            p = self.np_matrix[i]
+            p = reduced_matrix[i]
             coeff = np.zeros(shape)
             for j,term in enumerate(matrix_term_vals):
                 coeff[term] = p[j]
@@ -289,7 +291,7 @@ class Groebner(object):
                 l = list(p.lead_term)
                 if all([i<=j for i,j in zip(l,m)]) and len(l) == len(m):
                     c = [j-i for i,j in zip(l,m)]
-                    c_coeff = np.zeros(np.array(self.matrix_terms[0].val))
+                    c_coeff = np.zeros(np.array(self.matrix_terms[0].val)+1)
                     c_coeff[tuple(c)] = 1 
                     if self.power:
                         c = MultiPower(c_coeff)
@@ -298,7 +300,7 @@ class Groebner(object):
 
                     r = c*p
                     #now get rid of the excess 0's on the side of r.
-                    size = math.sqrt(len(self.matrix_terms))
+                    size = math.sqrt(len(self.matrix_terms)+1)
                     rsmall_coeff = r.coeff[:size,:size]
                     if self.power:
                         rsmall = MultiPower(rsmall_coeff)
@@ -331,19 +333,14 @@ class Groebner(object):
             else:
                 di[i]=j
         old_lms = set(di.values())
-        
-        print(self.np_matrix)
-        
+                
         if qr_decomposition:
             Q,R = qr(self.np_matrix)
-            print(Q)
             reduced_matrix = R
         else:
             P,L,U = lu(self.np_matrix)
             reduced_matrix = U
-        
-        print(reduced_matrix)
-        
+                            
         good_poly_spots = list()
         already_looked_at = set()
         for i, j in zip(*np.where(reduced_matrix!=0)):
@@ -353,6 +350,7 @@ class Groebner(object):
                 already_looked_at.add(i)
                 continue
             else:
+                #old_lms.add(j) #until we get better reducing
                 already_looked_at.add(i)
                 good_poly_spots.append(i)
         self.old_polys = self.new_polys + self.old_polys
@@ -360,7 +358,7 @@ class Groebner(object):
         if(len(good_poly_spots) ==0):
             return False
         else:
-            self.new_polys = self.sm_to_poly(good_poly_spots)
+            self.new_polys = self.sm_to_poly(good_poly_spots, reduced_matrix)
             return True
 
 
