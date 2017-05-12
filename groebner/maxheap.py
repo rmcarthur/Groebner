@@ -1,112 +1,131 @@
 import numpy as np
 import heapq
 
-class TermOrder(object):
+class Term(object):
     '''
-    Allows an ordering on tuples according to grevlex 
-    Used in making the heap object, to pop off the max monomial
+    Terms are just tuples of exponents with the grevlex ordering 
     '''
-    def __init__(self,tuple_val):
-        self.val = tuple_val
+    def __init__(self,val):
+        self.val = tuple(val)
 
-    def __str__(self):
-        return str(self.val)
+    def __repr__(self):
+        return str(self.val) + ' with grevlex order'
 
     def __lt__(self, other):
         '''
+        Redfine less-than according to grevlex
         '''
         if sum(self.val) < sum(other.val):
             return True
         elif sum(self.val) > sum(other.val):
             return False
         else:
-            for i,j in zip(self.val,other.val):
+            for i,j in zip(reversed(self.val),reversed(other.val)):
                 if i<j:
-                    return True
-                if i > j:
                     return False
+                if i > j:
+                    return True
             return False
+
+    # Define the other relations in grevlex order   
+        
+    def __eq__(self, other):
+        return self.val == other.val
 
     def __gt__(self, other):
-        if sum(self.val) > sum(other.val):
-            return True
-        elif sum(self.val) < sum(other.val):
-            return False
-        else:
-            for i,j in zip(self.val,other.val):
-                if i > j:
-                    return True
-                if i < j:
-                    return False
-            return False
+        return not(self < other or self == other)
+        
+    def __ge__(self, other):
+        return (self > other or self == other)
+
+    def __le__(self,other):
+        return (self < other or self == other)
 
 
-    def __eq__(self, other):
-        if sum(self.val) != sum(other.val):
-            return False
-        else:
-            for i,j in zip(self.val, other.val):
-                if i != j:
-                    return False
-            return True
- 
-class MaxHeapTermOrder(TermOrder):
+class Term_w_InvertedOrder(Term):
     '''
     Called by MaxHeap object to reverse the ordering for a min heap
-    Used exclusively with TermOrder objects
+    Used exclusively with Terms
     '''
-    def __init__(self,term_order_tuple):
+    def __init__(self,term):
         '''
-        Takes in a tuple
+        Takes in a Term.  val is the underlying tuple, term is the underlying term 
         '''
-        self.val = term_order_tuple
+        self.val = term.val
+        self.term = term
 
-    def __lt__(self,other): return TermOrder(self.val) > TermOrder(other.val)
-    def __gt__(self,other): return TermOrder(self.val) < TermOrder(other.val)
-    def __eq__(self,other): return TermOrder(self.val) == TermOrder(other.val)
-    def __str__(self): return str(self.val)
+    # Invert the order 
+    
+    def __lt__(self,other): return self.term > other.term
+    def __le__(self,other): return (self.term > other.term or self.term == other.term)
+    def __ge__(self,other): return (self.term < other.term or self.term == other.term)
+    def __gt__(self,other): return (self.term < other.term)
+    
+    def __repr__(self): 
+        return str(list(self.val)) + ' with inverted grevlex order'
 
 
 class MaxHeap(object):
     '''
-    implementation of a set min priorioty queue, one that only adds 
-    values to the queue if they don't exist there already
-    Do we want to pass term order objects or tuples? 
-    If you want to pass TermOrder objs, simply remove this line in headpush
-    x = TermOrder(x)
-    everything else is identitcal, that will change it to TermOrder on insert
+    Implementation of a set max-priority queue--one that only adds 
+    terms to the queue if they aren't there already
+    
+    Incoming and outgoing objects are all Terms (not Term_w_InvertedOrder)
     '''
+    
     def __init__(self): 
-        self.h = []
-        self._set = set()
+        self.h = []         # empty heap
+        self._set = set()   # empty set (of things already in the heap)
 
     def heappush(self, x): 
-        x = MaxHeapTermOrder(x)
-        if not x.val in self._set:
-            heapq.heappush(self.h,x)
-            self._set.add(x.val)
+        if not x.val in self._set:       # check if already in the set
+            x = Term_w_InvertedOrder(x)
+            heapq.heappush(self.h,x)     # push with InvertedOrder
+            self._set.add(x.val)         # but use the tuple in the set (it is easily hashable) 
         else:
             pass
-            #print('Double')
+            #print(x, 'is a duplicate')
 
     def heappop(self): 
-        val = heapq.heappop(self.h).val
-        self._set.discard(val)
-        return val
-    def __getitem__(self, i): return self.h[i].val
-    def __len__(self): return len(self.h)
+        term = heapq.heappop(self.h).term   # only keep the original term--without the InvertedOrder
+        self._set.discard(term.val)
+        return term
+    
+    def __getitem__(self, i): 
+        return self.h[i].term
 
+    def __len__(self): 
+        return len(self.h)
 
+    def __repr__(self):
+        return('A max heap of {} unique terms with the DegRevLex term order.'.format(len(self)))
 
 class MinHeap(MaxHeap):
     '''
-    Implementation of a set max priorioty queue, one that only adds 
-    values to the queue if they don't exist there already
-    See note in MinHeap about TermOrderObj
+    Implementation of a set min-priorioty queue.
+    
     '''
+
     def heappush(self,x): 
-        x = TermOrder(x)
+        ## Same as MaxHeap push, except that the term order is not inverted
         if not x.val in self._set:
             heapq.heappush(self.h, x)
             self._set.add(x.val)
+        else:
+            pass
+        
+    def heappop(self): 
+        """ Same as MaxHeap pop except that the term itself IS the underlying term.
+        """
+        term = heapq.heappop(self.h)   
+        self._set.discard(term.val)
+        return term
+    
+    def __getitem__(self, i): 
+        """ Same as MaxHeap getitem except that the term itself IS the underlying term.
+        """
+        return self.h[i]
+
+    def __repr__(self):
+        return('A min heap of {} unique terms with the DegRevLex term order.'.format(len(self)))
 
