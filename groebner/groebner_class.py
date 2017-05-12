@@ -195,19 +195,20 @@ class Groebner(object):
     def add_phi_to_matrix(self):
         '''
         Takes all new possible combinations of phi polynomials and adds them to the Groebner Matrix
-       
-        Parameters: 
-        new_f (list) : a list that consists of newly generated list polynomials to added to f.
-        old_f (list) : a list of polynomials already in f. 
+		
         '''
         for i,j in itertools.combinations(self.new_polys+self.old_polys,2):
-            # This prevents calculation of phi with combinations of old_f exclusively. (Not the most efficient right now.)
-            if i not in self.old_polys: 
+        	
+            # This prevents calculation of phi with combinations of old_f exclusively. 
+            if i not in self.old_polys:
+            	# Relative prime check: If the elementwise multiplication of list i and j are all zeros, calculation of phi is not needed. 
+            	#(I separated the if statements for better visibility reasons, if it's better to combine, please fix!)
+            	if not all([ v == 0 for v in [a*b for a,b in zip(i,j)]]): 
                 # Calculate the phi's.
-                p_a , p_b = self.calc_phi(i,j)
-                # Add the phi's on to the Groebner Matrix. 
-                self._add_poly_to_matrix(p_a)
-                self._add_poly_to_matrix(p_b)
+                    p_a , p_b = self.calc_phi(i,j)
+               		 # Add the phi's on to the Groebner Matrix. 
+                    self._add_poly_to_matrix(p_a)
+                    self._add_poly_to_matrix(p_b)
                 
         # Sorts the matrix. 
         argsort_list, self.matrix_terms = self.argsort(self.matrix_terms)
