@@ -45,8 +45,8 @@ class Groebner(object):
         polys_added = True
         while polys_added:
             print("Starting Loop")
-            for poly in self.new_polys+self.old_polys:
-                print(poly.coeff)
+            #for poly in self.new_polys+self.old_polys:
+            #    print(poly.coeff)
             self.matrix_terms = [] #Instantiate  here?
             self.np_matrix = np.array([[]])
             self.term_set = set()
@@ -65,10 +65,12 @@ class Groebner(object):
             self.add_r_to_matrix()
             print(self.np_matrix.shape)
             print(len(self.matrix_terms))
-            polys_added = self.reduce_matrix(qr_decomposition=False)
+            polys_added = self.reduce_matrix()
         print("WE WIN")
+        for poly in self.old_polys:
+            print(poly.coeff)
 
-    def sm_to_poly(self,idxs):
+    def sm_to_poly(self,idxs,reduced_matrix):
         '''
         Takes a list of indicies corresponding to the rows of the state matrix and 
         returns a list of polynomial objects
@@ -87,7 +89,7 @@ class Groebner(object):
 
         # Grabs each polynomial, makes coeff matrix and constructs object
         for i in idxs:
-            p = self.np_matrix[i]
+            p = reduced_matrix[i]
             coeff = np.zeros(shape)
             for j,term in enumerate(matrix_term_vals):
                 coeff[term] = p[j]
@@ -195,19 +197,20 @@ class Groebner(object):
     def add_phi_to_matrix(self):
         '''
         Takes all new possible combinations of phi polynomials and adds them to the Groebner Matrix
-       
-        Parameters: 
-        new_f (list) : a list that consists of newly generated list polynomials to added to f.
-        old_f (list) : a list of polynomials already in f. 
+		
         '''
         for i,j in itertools.combinations(self.new_polys+self.old_polys,2):
-            # This prevents calculation of phi with combinations of old_f exclusively. (Not the most efficient right now.)
-            if i not in self.old_polys: 
+        	
+            # This prevents calculation of phi with combinations of old_f exclusively. 
+            if i not in self.old_polys:
+            	# Relative prime check: If the elementwise multiplication of list i and j are all zeros, calculation of phi is not needed. 
+            	#(I separated the if statements for better visibility reasons, if it's better to combine, please fix!)
+            	if not all([ v == 0 for v in [a*b for a,b in zip(i,j)]]): 
                 # Calculate the phi's.
-                p_a , p_b = self.calc_phi(i,j)
-                # Add the phi's on to the Groebner Matrix. 
-                self._add_poly_to_matrix(p_a)
-                self._add_poly_to_matrix(p_b)
+                    p_a , p_b = self.calc_phi(i,j)
+               		 # Add the phi's on to the Groebner Matrix. 
+                    self._add_poly_to_matrix(p_a)
+                    self._add_poly_to_matrix(p_b)
                 
         # Sorts the matrix. 
         argsort_list, self.matrix_terms = self.argsort(self.matrix_terms)
@@ -289,7 +292,7 @@ class Groebner(object):
                 l = list(p.lead_term)
                 if all([i<=j for i,j in zip(l,m)]) and len(l) == len(m):
                     c = [j-i for i,j in zip(l,m)]
-                    c_coeff = np.zeros(np.array(self.matrix_terms[0].val))
+                    c_coeff = np.zeros(np.array(self.matrix_terms[0].val)+1)
                     c_coeff[tuple(c)] = 1 
                     if self.power:
                         c = MultiPower(c_coeff)
@@ -298,7 +301,7 @@ class Groebner(object):
 
                     r = c*p
                     #now get rid of the excess 0's on the side of r.
-                    size = math.sqrt(len(self.matrix_terms))
+                    size = math.sqrt(len(self.matrix_terms)+1)
                     rsmall_coeff = r.coeff[:size,:size]
                     if self.power:
                         rsmall = MultiPower(rsmall_coeff)
@@ -331,19 +334,14 @@ class Groebner(object):
             else:
                 di[i]=j
         old_lms = set(di.values())
-        
-        print(self.np_matrix)
-        
+                
         if qr_decomposition:
             Q,R = qr(self.np_matrix)
-            print(Q)
             reduced_matrix = R
         else:
             P,L,U = lu(self.np_matrix)
             reduced_matrix = U
-        
-        print(reduced_matrix)
-        
+                            
         good_poly_spots = list()
         already_looked_at = set()
         for i, j in zip(*np.where(reduced_matrix!=0)):
@@ -353,6 +351,7 @@ class Groebner(object):
                 already_looked_at.add(i)
                 continue
             else:
+                #old_lms.add(j) #until we get better reducing
                 already_looked_at.add(i)
                 good_poly_spots.append(i)
         self.old_polys = self.new_polys + self.old_polys
@@ -360,7 +359,7 @@ class Groebner(object):
         if(len(good_poly_spots) ==0):
             return False
         else:
-            self.new_polys = self.sm_to_poly(good_poly_spots)
+            self.new_polys = self.sm_to_poly(good_poly_spots, reduced_matrix)
             return True
 
 
