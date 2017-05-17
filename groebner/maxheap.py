@@ -40,7 +40,10 @@ class Term(object):
 
     def __le__(self,other):
         return (self < other or self == other)
-
+    
+    #Makes terms hashable so they can go in a set
+    def __hash__(self):
+        return hash(self.val)
 
 class Term_w_InvertedOrder(Term):
     '''
@@ -108,9 +111,9 @@ class MinHeap(MaxHeap):
 
     def heappush(self,x): 
         ## Same as MaxHeap push, except that the term order is not inverted
-        if not x.val in self._set:
+        if not x in self._set:
             heapq.heappush(self.h, x)
-            self._set.add(x.val)
+            self._set.add(x)
         else:
             pass
         

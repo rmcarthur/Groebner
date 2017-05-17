@@ -50,14 +50,14 @@ class MultiPower(Polynomial):
         '''
         return MultiPower(fftconvolve(self.coeff, other.coeff))
 
-    def mon_mult(M,P):
+    def mon_mult(self,M):
         '''
         M is a tuple of the powers in the monomial.
             Ex: x^3*y^4*z^2 would be input as (3,4,2)
-        P is the polynomial.
+        #P is the polynomial.
         '''
         tuple1 = []
         for i in M:
             list1 = (i,0)
             tuple1.append(list1)
-        return(np.pad(P, (tuple1), 'constant', constant_values = 0))
+        return MultiPower(np.pad(self.coeff, tuple1, 'constant', constant_values = 0))
