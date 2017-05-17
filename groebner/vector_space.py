@@ -8,7 +8,7 @@ import itertools
 class VectorSpace(object):
     '''
     params:
-    groebner_basis - a Groebner object representing a Groebner Basis
+    GB - a Groebner object representing a Groebner Basis
                      for the ideal of interest
     '''
     def __init__(self):
