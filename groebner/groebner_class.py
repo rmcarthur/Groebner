@@ -14,20 +14,19 @@ class Groebner(object):
     def __init__(self,polys):
         '''
         polys -- a list of polynomials that generate your ideal
-        self.org_len - Orginal length of the polys passed in
+        self.old_polys - The polynomials that have already gone through the solve loop once. Starts as none.
+        self.new_polys - New polynomials that have never been throught the solve loop. All of them at first.
+        self.np_matrix - The full matrix of polynomials.
+        self.term_set - The set of monomials in the matrix.
+        self.lead_term_set - The set of monomials that are lead terms of some polynomial in the matrix.
         '''
         self.old_polys = list()
         self.new_polys = polys
-        self.f_len = len(polys)
-        self.largest_mon = maxheap.Term(tuple((0,0)))
-        self.np_matrix = np.zeros([0,0]) # and this
+        self.np_matrix = np.array([]) # and this
         self.term_set = set()
         self.lead_term_set = set()
-        self.term_dict = {}
 
         # Check polynomial types
-
-        #print([type(p) == groebner.multi_power.MultiPower for p in self.new_polys])
         if all([type(p) == MultiPower for p in self.new_polys]):
             self.power = True
         elif all([type(p) == MultiCheb for p in self.new_polys]):
@@ -35,24 +34,30 @@ class Groebner(object):
         else:
             print([type(p) == MultiPower for p in self.new_polys])
             raise ValueError('Bad polynomials in list')
-
-        #np objects
-        #initialize_np_matrix
     
     def initialize_np_matrix(self):
+        '''
+        Initialzes self.np_matrix to having just old_polys and new_polys in it
+        matrix_terms is the header of the matrix, it lines up each column with a monomial
+        '''
         self.matrix_terms = []
-        self.np_matrix = np.array([[]])
+        self.np_matrix = np.array([])
         self.term_set = set()
         self.lead_term_set = set()
         self._add_polys(self.new_polys)
         self._add_polys(self.old_polys)
-        #self.sort_matrix()
+        self.clean_matrix()
         pass
     
-    def solve(self):
+    def solve(self, qr_reduction = True):
+        '''
+        The main function. Initializes the matrix, adds the phi's and r's, and then reduces it. Repeats until the reduction
+        no longer adds any more polynomials to the matrix. Print statements let us see the progress of the code.
+        '''
         polys_were_added = True
+        i=1 #Tracks what loop we are on.
         while polys_were_added:
-            print("Starting Loop")
+            print("Starting Loop #"+str(i))
             self.initialize_np_matrix()
             print(self.np_matrix.shape)
             print("ADDING PHI's")
@@ -61,33 +66,48 @@ class Groebner(object):
             print("ADDING r's")
             self.add_r_to_matrix()
             print(self.np_matrix.shape)
-            polys_were_added = self.reduce_matrix()
+            polys_were_added = self.reduce_matrix(qr_reduction = qr_reduction)
+            i+=1
         print("WE WIN")
+        #Print the Groebner Basis. Not reduced.
         for poly in self.old_polys:
             print(poly.coeff)
         pass
     
     def sort_matrix(self):
-        # Sorts the matrix. 
+        '''
+        Sorts the matrix into degrevlex order.
+        '''
         argsort_list, self.matrix_terms = self.argsort(self.matrix_terms)
         self.np_matrix = self.np_matrix[:,argsort_list]
+        pass
+    
+    def clean_matrix(self):
+        '''
+        Gets rid of rows and columns in the np_matrix that are all zero.
+        '''
+        ##This would replace all small values in the matrix with 0.
+        ##self.np_matrix[np.where(self.np_matrix < 1.e-10)]=0
         
-        # Remove all zero polynomials, and monomials with no elements in them
-        non_zero_mon = abs(np.sum(self.np_matrix, axis=0))!=0
-        self.np_matrix = self.np_matrix[:,non_zero_mon]
+        #Removes all 0 monomials
+        non_zero_monomial = abs(np.sum(abs(self.np_matrix), axis=0))>0 ##Increasing this will get rid of small things.
+        self.np_matrix = self.np_matrix[:,non_zero_monomial] #only keeps the non_zero_monomials
+        #If a monomial was removed, removes it from self.matrix_terms  as well, and the term set
         to_remove = set()
-        for i,j in zip(self.matrix_terms, non_zero_mon):
+        for i,j in zip(self.matrix_terms, non_zero_monomial):
             if not j:
                 to_remove.add(i)
         for i in to_remove:
             self.matrix_terms.remove(i)
-        non_zero_poly = abs(np.sum(self.np_matrix,axis=1))!=0
-        self.np_matrix = self.np_matrix[non_zero_poly,:]
+            self.term_set.remove(i)
+        #Removes all 0 polynomials
+        non_zero_polynomial = abs(np.sum(abs(self.np_matrix),axis=1))>0 ##Increasing this will get rid of small things.
+        self.np_matrix = self.np_matrix[non_zero_polynomial,:] #Only keeps the non_zero_polymonials
         pass
 
     def sm_to_poly(self,idxs,reduced_matrix):
         '''
-        Takes a list of indicies corresponding to the rows of the state matrix and 
+        Takes a list of indicies corresponding to the rows of the reduced matrix and 
         returns a list of polynomial objects
         '''
         shape = []
@@ -106,20 +126,34 @@ class Groebner(object):
             for j,term in enumerate(matrix_term_vals):
                 coeff[term] = p[j]            
             
-            #Might be good to check for unneeded 0's here. No rush though.
+            ##This would replace all small values in the new polynomial with 0
+            ##coeff[np.where(coeff < 1.e-10)]=0
             
             if self.power:
                 poly = MultiPower(coeff)
             else:
                 poly = MultiCheb(coeff)
+            
+            ##This would not add small or 0 polynomials
+            ##if abs(np.sum(abs(coeff))) > 1.e-10:
             p_list.append(poly)
         return p_list
 
-    def _add_poly_to_matrix(self,p):
+    def _add_poly_to_matrix(self, p, adding_r = False):
         '''
         Takes in a single polynomial and adds it to the state matrix
+        First adds a row of zeros, then goes through each monomial in the polynomial and puts it's coefficient in
+        adding new columns as needed when new monomials are added.
+        
+        adding_r is only true when the r's are being added, this way it knows to keep adding new monomials to the heap
+        for further r calculation
         '''
         self.lead_term_set.add(p.lead_term)
+        
+        #Adds a new row of 0's if the matrix has any width
+        if(self.np_matrix.shape[0] != 0):
+            zero_poly = np.zeros((1,self.np_matrix.shape[1]))
+            self.np_matrix = np.vstack((zero_poly,self.np_matrix))
         
         for idx in p.degrevlex_gen(): 
             idx_term = maxheap.Term(tuple(idx)) #Get a term object 
@@ -127,6 +161,9 @@ class Groebner(object):
             idx_term.val = tuple(map(lambda i: int(i), idx_term.val))
             coeff_val = p.coeff[idx_term.val] 
 
+            if(coeff_val == 0):
+                continue
+            
             # If already in idx_list
             if idx_term in self.term_set:
                 # get index of label and np matrix to put into
@@ -137,34 +174,27 @@ class Groebner(object):
             else:
                 # Make new column
                 self.term_set.add(idx_term)
-                length_of_mat = self.np_matrix.shape[0]
-                if length_of_mat == 0:
+                #If r's being added, adds new monomial to the heap
+                if adding_r:
+                    if(idx_term.val not in self.lead_term_set):
+                        self.monheap.heappush(idx_term)
+                length_of_matrix = self.np_matrix.shape[0]
+                if length_of_matrix == 0:
                     self.np_matrix = np.zeros((1,1))
                 else:
-                    zeros = np.zeros((length_of_mat,1))
+                    zeros = np.zeros((length_of_matrix,1))
                     self.np_matrix = np.hstack((self.np_matrix, zeros))
                 self.matrix_terms.append(idx_term)
                 self.np_matrix[0,-1] = coeff_val
-        zero_poly = np.zeros((1,self.np_matrix.shape[1]))
-        self.np_matrix = np.vstack((zero_poly,self.np_matrix))
         pass
 
     def _add_polys(self, p_list):
         '''
-        p_list - a list of polynomial object
-
-        sets self.matrix to the appropriate matrix
-        
-        returns - None
+        p_list - a list of polynomials
+        Adds the polynomials to self.np_matrix
         '''
         for p in p_list:
-            # Add a zero row for this polynomial
             self._add_poly_to_matrix(p)
-
-        self.np_matrix = self.np_matrix[1:,:]
-
-        argsort_list, self.matrix_terms = self.argsort(self.matrix_terms)
-        self.np_matrix = self.np_matrix[:, argsort_list]
         pass 
 
     def argsort(self, index_list):
@@ -201,7 +231,7 @@ class Groebner(object):
     def add_phi_to_matrix(self):
         '''
         Takes all new possible combinations of phi polynomials and adds them to the Groebner Matrix
-        
+        Includes some checks to throw out unnecessary phi's
         '''
         for i,j in itertools.combinations(self.new_polys+self.old_polys,2):
             # This prevents calculation of phi with combinations of old_f exclusively. 
@@ -214,7 +244,7 @@ class Groebner(object):
                     # Add the phi's on to the Groebner Matrix. 
                     self._add_poly_to_matrix(p_a)
                     self._add_poly_to_matrix(p_b)
-        #self.sort_matrix()
+        self.clean_matrix()
         pass
     
     def _build_maxheap(self):
@@ -223,7 +253,7 @@ class Groebner(object):
         '''
         self.monheap = maxheap.MaxHeap()        
         for mon in self.term_set:
-            if(mon.val not in self.lead_term_set):
+            if(mon.val not in self.lead_term_set): #Adds every monomial that isn't a lead term to the heap
                 self.monheap.heappush(mon)
         pass
 
@@ -232,29 +262,37 @@ class Groebner(object):
         Finds the r polynomial that has a leading monomial m
         Returns the polynomial.
         '''
-        for p in self.new_polys + self.old_polys: #Do we need all of these?
+        for p in self.new_polys + self.old_polys:
                 l = list(p.lead_term)
-                if all([i<=j for i,j in zip(l,m)]) and len(l) == len(m):
+                if all([i<=j for i,j in zip(l,m)]) and len(l) == len(m): #Checks to see if l divides m
                     #New mon_mult method. Will break with MultiCheb unitl that is added.
                     c = [j-i for i,j in zip(l,m)]
-                    if not l == m: #make sure c isn't all 0
+                    if not l == m: #Make sure c isn't all 0
                         return p.mon_mult(c)
         return None
 
     def add_r_to_matrix(self):
         '''
-        Makes Heap out of all monomials, and finds lcms to add them into the matrix
+        Finds the r polynomials and adds them to the matrix.
+        First makes Heap out of all potential monomials, then finds polynomials with leading terms that divide it and
+        add them to the matrix.
         '''
         self._build_maxheap()
         while len(self.monheap) > 0:
             m = list(self.monheap.heappop().val)
             r = self.calc_r(m)
             if not r==None:
-                self._add_poly_to_matrix(r)
+                self._add_poly_to_matrix(r, 'adding_r' == True)
         self.sort_matrix()
+        self.clean_matrix()
         pass
     
-    def reduce_matrix(self, qr_decomposition=False):
+    def reduce_matrix(self, qr_reduction=True):
+        '''
+        Reduces the matrix fully using either QR or LU decomposition. Adds the new_poly's to old_poly's, and adds to
+        new_poly's any polynomials created by the reduction that have new leading monomials.
+        Returns-True if new polynomials were found, False otherwise.
+        '''
         di={}
         for i, j in zip(*np.where(self.np_matrix!=0)):
             if i in di:
@@ -263,19 +301,21 @@ class Groebner(object):
                 di[i]=j
         old_lms = set(di.values())
                 
-        if qr_decomposition:
-            #print(self.np_matrix)
+        if qr_reduction:
             Q,R = qr(self.np_matrix, 'pivoting' == True)
             reduced_matrix = R
-            #print(R)
+            reduced_matrix = self.fully_reduce(reduced_matrix)
         else:
             P,L,U = lu(self.np_matrix)
             reduced_matrix = U
+            reduced_matrix = self.fully_reduce(reduced_matrix, qr_reduction = False)
         
-        #Check that it's fully reduced
-        
+        #Checks that it's fully reduced
+        reduced_matrix = self.fully_reduce(reduced_matrix)
+                
+        #Get the new polynomials
         good_poly_spots = list()
-        already_looked_at = set()
+        already_looked_at = set() #rows whose leading monomial we've already checked
         for i, j in zip(*np.where(reduced_matrix!=0)):
             if i in already_looked_at:
                 continue
@@ -283,17 +323,46 @@ class Groebner(object):
                 already_looked_at.add(i)
                 continue
             else:
-                #old_lms.add(j) #until we get better reducing
                 already_looked_at.add(i)
-                good_poly_spots.append(i)
+                good_poly_spots.append(i) #This row gives a new leading monomial
+        
         self.old_polys = self.new_polys + self.old_polys
-        self.new_polys = list()
-        if(len(good_poly_spots) ==0):
-            return False
-        else:
-            self.new_polys = self.sm_to_poly(good_poly_spots, reduced_matrix)
-            return True
-        pass
+        self.new_polys = self.sm_to_poly(good_poly_spots, reduced_matrix)
+        return len(self.new_polys) > 0
+    
+    def fully_reduce(self, matrix, qr_reduction = True):
+        '''
+        Fully reduces the matrix by making sure all submatrices formed by taking out columns of zeros are
+        also in upper triangular form. Does this recursively. Returns the reduced matrix.
+        '''
+        diagonals = np.diagonal(matrix).copy()
+        zero_diagonals = np.where(diagonals==0)[0]
+        if(len(zero_diagonals != 0)):
+            first_zero = zero_diagonals[0]
+            i = first_zero
+            #Checks how many rows we can go down that are all 0.
+            while all([k==0 for k in matrix[first_zero:,i:i+1]]):
+                i+=1
+                if(i == matrix.shape[1]):
+                    i = -1
+                    break
+                pass
+            
+            if(i != -1):
+                sub_matrix = matrix[first_zero: , i:]
+                if qr_reduction:
+                    Q,R = qr(sub_matrix, 'pivoting' == True)
+                    sub_matrix = self.fully_reduce(R)
+                else:
+                    P,L,U = lu(sub_matrix)
+                    #ERROR HERE BECAUSE OF THE PERMUATION MATRIX, I'M NOT SURE HOW TO FIX IT
+                    sub_matrix = self.fully_reduce(U, qr_reduction = False)
 
-
-
+                matrix[first_zero: , i:] = sub_matrix
+        return matrix
+    
+    
+    
+    
+    
+    
