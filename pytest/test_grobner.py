@@ -20,7 +20,7 @@ def test_reduce_matrix():
     
     poly1 = MultiPower(np.array([[1., 0.],[0., 0.]]))
     poly2 = MultiPower(np.array([[0., 0.],[1., 0.]]))
-    poly3 = MultiPower(np.array([[1., 0.],[12., -5.]]))
+    poly3 = MultiPower(np.array([[1., 0.],[12., 0.]]))
     grob = Groebner([poly1, poly2, poly3])
     grob.initialize_np_matrix()
     assert(not grob.reduce_matrix())
