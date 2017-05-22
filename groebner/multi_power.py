@@ -29,8 +29,8 @@ class MultiPower(Polynomial):
         output- the next step in ordering
     """
 
-    def __init__(self, coeff, order='degrevlex', lead_term=None):
-        super(MultiPower, self).__init__(coeff, order, lead_term)
+    def __init__(self, coeff, order='degrevlex', lead_term=None, clean_zeros = True):
+        super(MultiPower, self).__init__(coeff, order, lead_term, clean_zeros)
 
     def __add__(self,other):
         '''
@@ -60,4 +60,4 @@ class MultiPower(Polynomial):
         for i in M:
             list1 = (i,0)
             tuple1.append(list1)
-        return MultiPower(np.pad(self.coeff, tuple1, 'constant', constant_values = 0))
+        return MultiPower(np.pad(self.coeff, tuple1, 'constant', constant_values = 0), clean_zeros = False)
