@@ -79,6 +79,14 @@ class Groebner(object):
         print("WE WIN")
         return self.reduce_groebner_basis()
         pass
+
+    def argsort(self, index_list):
+        '''
+        Returns an argsort list for the index, as well as sorts the list in place
+        '''
+        argsort_list = sorted(range(len(index_list)), key=index_list.__getitem__)[::-1]
+        index_list.sort()
+        return argsort_list, index_list[::-1]
     
     def pad_back(self,mon,poly):
         tuple1 = []
@@ -186,7 +194,7 @@ class Groebner(object):
     
     def sort_matrix(self):
         '''
-        Sorts the matrix into degrevlex order.
+        Sorts the matrix into grevlex order.
         '''
         argsort_list, self.matrix_terms = self.argsort(self.matrix_terms)
         self.np_matrix = self.np_matrix[:,argsort_list]
@@ -245,8 +253,12 @@ class Groebner(object):
                 poly = MultiCheb(coeff)
             
             ##This would not add small or 0 polynomials
+
             if np.sum(abs(coeff)) > 1.e-10:
                 p_list.append(poly)
+            ##if abs(np.sum(abs(coeff))) > 1.e-10:
+
+            p_list.append(poly)
         return p_list
 
     def _add_poly_to_matrix(self, p, adding_r = False):
@@ -306,13 +318,6 @@ class Groebner(object):
             self._add_poly_to_matrix(p)
         pass 
 
-    def argsort(self, index_list):
-        '''
-        Returns an argsort list for the index, as well as sorts the list in place
-        '''
-        argsort_list = sorted(range(len(index_list)), key=index_list.__getitem__)[::-1]
-        index_list.sort()
-        return argsort_list, index_list[::-1]
 
     def _lcm(self,a,b):
         '''
@@ -333,6 +338,7 @@ class Groebner(object):
         '''
         lcm = self._lcm(a,b)
         #updated to use monomial multiplication. Will crash for MultiCheb until that gets added
+        # We could catch the error, or just wait for cheb mult, which should be done real soon.
         a_diff = tuple([i-j for i,j in zip(lcm, a.lead_term)])
         b_diff = tuple([i-j for i,j in zip(lcm, b.lead_term)])
         return a.mon_mult(a_diff), b.mon_mult(b_diff)
