@@ -5,13 +5,15 @@ import itertools
 
 
 class Polynomial(object):
-    def __init__(self, coeff, order='degrevlex', lead_term=None):
+    def __init__(self, coeff, order='degrevlex', lead_term=None, clean_zeros = True):
         '''
         terms, int- number of chebyshev polynomials each variable can have. Each dimension will have term terms
         dim, int- number of different variables, how many dim our tensor will be
         order, string- how you want to order your polynomials. Grevlex is default
         '''
         self.coeff = coeff
+        if clean_zeros:
+            self.clean_coeff()
         self.dim = self.coeff.ndim
         self.terms = np.prod(self.coeff.shape)
         self.order = order
@@ -21,6 +23,26 @@ class Polynomial(object):
             self.update_lead_term()
         else:
             self.lead_term = lead_term
+    
+    def clean_coeff(self):
+        """
+        Gets rid of any 0's on the outside of the coeff matrix, not giving any info.
+        """
+        sum_values = np.sum(abs(self.coeff))
+        if sum_values == 0:
+            return
+        for axis in range(self.coeff.ndim):
+            change = False
+            while not change:
+                temp = np.delete(self.coeff,-1,axis=axis)
+                sum_temp = np.sum(abs(temp))
+                if sum_temp == sum_values:
+                    self.coeff = temp
+                else:
+                    change = True
+                pass
+            pass
+        pass
 
     def check_column_overload(self, max_values, current, column):
         '''
@@ -126,7 +148,7 @@ class Polynomial(object):
             gen = self.degrevlex_gen()
             for idx in gen:
                 idx = tuple(map(lambda i: int(i), idx))
-                if self.coeff[tuple(idx)] != 0:
+                if abs(self.coeff[tuple(idx)]) > 1.e-10:
                     self.lead_term = idx
                     self.lead_coeff = self.coeff[tuple(idx)]
                     found = True
@@ -134,4 +156,7 @@ class Polynomial(object):
         if not found:
             self.lead_term = None
             self.lead_coeff = 0
+        else:
+            self.coeff = self.coeff/self.lead_coeff
+            self.lead_coeff = 1.
         #print('Leading Coeff is {}'.format(self.lead_term))
