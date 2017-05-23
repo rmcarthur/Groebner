@@ -49,6 +49,21 @@ class MultiPower(Polynomial):
         here we add leading terms?
         '''
         return MultiPower(fftconvolve(self.coeff, other.coeff))
+    
+    def __eq__(self,other):
+        '''
+        check if coeff matrix is the same
+        '''
+        if self.shape != other.shape:
+            return False
+        else:
+            return np.allclose(self.coeff, other.coeff)
+    
+    def __ne__(self,other):
+        '''
+        check if coeff matrix is not the same same
+        '''
+        return not (self == other)
 
     def mon_mult(self,M):
         '''

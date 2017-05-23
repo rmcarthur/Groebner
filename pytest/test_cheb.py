@@ -32,9 +32,9 @@ def test_mult_diff():
     c1 = MultiCheb(np.arange(0,4).reshape(2,2))
     c2 = MultiCheb(np.ones((2,1)))
     p = c1*c2
-    truth = np.array([[1,2.5,0],[2,4,0],[1,1.5,0]])
+    truth = MultiCheb(np.array([[1,2.5,0],[2,4,0],[1,1.5,0]]))
     
-    assert np.allclose(p.coeff.all(),truth.all())
+    assert np.allclose(p.coeff.all(),truth.coeff.all())
 
 
 

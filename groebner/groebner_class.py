@@ -34,6 +34,8 @@ class Groebner(object):
         self.np_matrix = np.array([])
         self.term_set = set()
         self.lead_term_set = set()
+        #for p in self.new_polys:
+        #    print(p.coeff)
     
     def initialize_np_matrix(self):
         '''
@@ -79,14 +81,6 @@ class Groebner(object):
         print("WE WIN")
         return self.reduce_groebner_basis()
         pass
-
-    def argsort(self, index_list):
-        '''
-        Returns an argsort list for the index, as well as sorts the list in place
-        '''
-        argsort_list = sorted(range(len(index_list)), key=index_list.__getitem__)[::-1]
-        index_list.sort()
-        return argsort_list, index_list[::-1]
     
     def pad_back(self,mon,poly):
         tuple1 = []
@@ -135,7 +129,7 @@ class Groebner(object):
         non_zeros = list()
         for p in polys:
             p.coeff[np.where(abs(p.coeff) < 1.e-15)]=0
-            if p.lead_term==None:
+            if p.lead_term==None or p in non_zeros:
                 continue
             non_zeros.append(p)
             pass
@@ -152,6 +146,8 @@ class Groebner(object):
                 if poly.lead_term == None or other.lead_term == None:
                     continue #one of them is empty
                 if other != poly and all([i-j >= 0 for i,j in zip(poly.lead_term,other.lead_term)]):
+                    #print(poly.coeff)
+                    #print(other.coeff)
                     monomial = tuple(np.subtract(poly.lead_term,other.lead_term))
                     new = other.mon_mult(monomial)
                     
@@ -179,7 +175,6 @@ class Groebner(object):
         '''
         Turns the groebner basis into a reduced groebner basis
         '''
-        
         groebner_basis = list()
         for poly in self.old_polys:
             if np.sum(np.sum(abs(poly.coeff))) > 1.e-10:
@@ -194,7 +189,7 @@ class Groebner(object):
     
     def sort_matrix(self):
         '''
-        Sorts the matrix into grevlex order.
+        Sorts the matrix into degrevlex order.
         '''
         argsort_list, self.matrix_terms = self.argsort(self.matrix_terms)
         self.np_matrix = self.np_matrix[:,argsort_list]
@@ -231,33 +226,23 @@ class Groebner(object):
         shape = []
         p_list = []
         matrix_term_vals = [i.val for i in self.matrix_terms]
-
+        
         # Finds the maximum size needed for each of the poly coeff tensors
         for i in range(len(matrix_term_vals[0])):
             # add 1 to each to compensate for constant term
             shape.append(max(matrix_term_vals, key=itemgetter(i))[i]+1)
-
         # Grabs each polynomial, makes coeff matrix and constructs object
         for i in idxs:
             p = reduced_matrix[i]
             coeff = np.zeros(shape)
             for j,term in enumerate(matrix_term_vals):
-                coeff[term] = p[j]            
-            
-            ##This would replace all small values in the new polynomial with 0
-            coeff[np.where(abs(coeff) < 1.e-10)]=0
-            
+                coeff[term] = p[j]
+                        
             if self.power:
                 poly = MultiPower(coeff)
             else:
                 poly = MultiCheb(coeff)
             
-            ##This would not add small or 0 polynomials
-
-            if np.sum(abs(coeff)) > 1.e-10:
-                p_list.append(poly)
-            ##if abs(np.sum(abs(coeff))) > 1.e-10:
-
             p_list.append(poly)
         return p_list
 
@@ -318,6 +303,13 @@ class Groebner(object):
             self._add_poly_to_matrix(p)
         pass 
 
+    def argsort(self, index_list):
+        '''
+        Returns an argsort list for the index, as well as sorts the list in place
+        '''
+        argsort_list = sorted(range(len(index_list)), key=index_list.__getitem__)[::-1]
+        index_list.sort()
+        return argsort_list, index_list[::-1]
 
     def _lcm(self,a,b):
         '''
@@ -338,7 +330,6 @@ class Groebner(object):
         '''
         lcm = self._lcm(a,b)
         #updated to use monomial multiplication. Will crash for MultiCheb until that gets added
-        # We could catch the error, or just wait for cheb mult, which should be done real soon.
         a_diff = tuple([i-j for i,j in zip(lcm, a.lead_term)])
         b_diff = tuple([i-j for i,j in zip(lcm, b.lead_term)])
         return a.mon_mult(a_diff), b.mon_mult(b_diff)
@@ -384,7 +375,7 @@ class Groebner(object):
                     c = [j-i for i,j in zip(l,m)]
                     if not l == m: #Make sure c isn't all 0
                         return p.mon_mult(c)
-        return None
+        return MultiPower(np.array([0]))
 
     def add_r_to_matrix(self):
         '''
@@ -396,7 +387,7 @@ class Groebner(object):
         while len(self.monheap) > 0:
             m = list(self.monheap.heappop().val)
             r = self.calc_r(m)
-            if not r==None:
+            if not r.lead_term==None:
                 self._add_poly_to_matrix(r, adding_r = True)
         self.sort_matrix()
         self.clean_matrix()
@@ -430,6 +421,8 @@ class Groebner(object):
         #Checks that it's fully reduced
         #print(reduced_matrix)
         reduced_matrix = self.fully_reduce(reduced_matrix)
+        #print(reduced_matrix)
+        
         #Get the new polynomials
         good_poly_spots = list()
         already_looked_at = set() #rows whose leading monomial we've already checked
@@ -445,10 +438,12 @@ class Groebner(object):
         self.old_polys = self.new_polys + self.old_polys
         self.new_polys = list()
         new_polys = self.sm_to_poly(good_poly_spots, reduced_matrix)
+            
         for p in new_polys:
             reduced_p = self.reduce_poly(p)
             if p.lead_term != None:
                 self.new_polys.append(p)
+                
         return len(self.new_polys) > 0
     
     
