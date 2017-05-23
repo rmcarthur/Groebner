@@ -105,7 +105,10 @@ class Polynomial(object):
                         #Slide it to the left
                         current[left_most_spot] -= 1
                         current[left_most_spot-1] += 1
-                        yield base - current
+                        if self.check_column_overload(max_values, current, left_most_spot-1):
+                            onward = False
+                        else:
+                            yield base - current
                     elif(current[j] == i):
                         #Reset it for the next run
                         current[0] = 0
