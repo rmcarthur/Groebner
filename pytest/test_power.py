@@ -19,10 +19,9 @@ def test_mult():
     p1 = MultiPower(test1)
     p2 = MultiPower(test2)
     new_poly = p1*p2
-    truth = np.array([[0, 2, 2],[4,9,2],[6,3,0]])
-    assert np.allclose(new_poly.coeff, truth)
-
-
+    truth = MultiPower(np.array([[0, 2, 2],[4,9,2],[6,3,0]]))
+    assert np.allclose(new_poly.coeff, truth.coeff)
+   
 
 def test_generator():
     poly = MultiPower(np.array([[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]))
