@@ -124,8 +124,3 @@ def test_solve():
     x1 = grob.solve()
     assert(X == x1[0])
     
-    
-    
-    
-    
-    
