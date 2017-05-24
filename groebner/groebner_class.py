@@ -335,7 +335,7 @@ class Groebner(object):
         return a.mon_mult(a_diff), b.mon_mult(b_diff)
     
     
-    def add_phi_to_matrix(self):
+    def add_phi_to_matrix(self,phi = True):
         '''
         Takes all new possible combinations of phi polynomials and adds them to the Groebner Matrix
         Includes some checks to throw out unnecessary phi's
@@ -357,7 +357,7 @@ class Groebner(object):
         # Iterating through both possible combinations. 
         while B:
             i,j = B.pop()
-            if self.phi_criterion(i,j,B)== True:
+            if self.phi_criterion(i,j,B,phi)== True:
                 #calculate the phi's.
                 poly = self.new_polys + self.old_polys
                 p_a , p_b = self.calc_phi(poly[i],poly[j])
@@ -368,7 +368,7 @@ class Groebner(object):
         
         pass
     
-    def phi_criterion(self,i,j,B):
+    def phi_criterion(self,i,j,B,phi):
         # Need to run tests 
         '''
         Parameters: 
@@ -384,7 +384,8 @@ class Groebner(object):
                 otherwise, returns True. 
     	   * See proposition 8 in "Section 10: Improvements on Buchburger's algorithm."
 	   '''
-       
+        if phi == False:
+            return True
         # List of new and old polynomials. 
         polys = self.new_polys+self.old_polys
         
