@@ -29,8 +29,8 @@ class MultiCheb(Polynomial):
         output- the next step in ordering
     """
 
-    def __init__(self, coeff, order='degrevlex', lead_term=None):
-        super(MultiCheb, self).__init__(coeff, order, lead_term)
+    def __init__(self, coeff, order='degrevlex', lead_term=None, clean_zeros = True):
+        super(MultiCheb, self).__init__(coeff, order, lead_term, clean_zeros)
 
 
     def __add__(self,other):
