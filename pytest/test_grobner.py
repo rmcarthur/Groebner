@@ -2,7 +2,6 @@ import numpy as np
 import os, sys
 from itertools import permutations
 sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
-print(os.path.dirname(os.path.abspath(__file__)).split('\\'))
 import maxheap
 from multi_power import MultiPower
 from groebner_class import Groebner
@@ -124,4 +123,33 @@ def test_solve():
     X = MultiPower(np.array([[1.]]))
     x1 = grob.solve()
     assert(X == x1[0])
+    
+def test_phi_criterion():
+    A = MultiPower(np.array([[-1,0,1],[0,0,0]]))
+    B = MultiPower(np.array([[-1,0,0],[0,1,0],[1,0,0]]))
+    grob1 = Groebner([A,B])
+    grob2 = Groebner([A,B])
+    polys1 = True
+    polys2 = True
+    
+    while polys1:
+        grob1.initialize_np_matrix()
+        grob1.add_phi_to_matrix(False)
+        grob1.add_r_to_matrix()
+        polys1= grob1.reduce_matrix()
+            
+    while polys2:
+        grob2.initialize_np_matrix()
+        grob2.add_phi_to_matrix()
+        grob2.add_r_to_matrix()
+        polys2 = grob2.reduce_matrix()
+        
+    #basis1 = grob1.reduce_groebner_basis
+    #basis2 = grob2.reduce_groebner_basis
+            
+    #assert all(all(a.coeff==b.coeff)
+            
+            
+            
+        
     
