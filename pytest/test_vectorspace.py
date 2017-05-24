@@ -12,8 +12,8 @@ def test_makeBasis():
     f2 = MultiPower(np.array([[0,0,0],[-1,0,1],[0,0,0]]))
     f3 = MultiPower(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]))
     G = [f1, f2, f3]
-    vs = VectorSpace()
-    basis = vs.makeBasis(G)
+    vs = VectorSpace(G)
+    basis = vs.basis
     trueBasis = [(0,0), (1,0), (0,1), (1,1), (0,2)]
 
     assert (len(basis) == len(trueBasis)) and (m in basis for m in trueBasis), \
