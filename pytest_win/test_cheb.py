@@ -1,6 +1,6 @@
 import numpy as np
 import os, sys
-sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
+sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('\\')[:-1]) + '/groebner')
 from multi_cheb import MultiCheb
 import pytest
 import pdb
@@ -20,8 +20,9 @@ def test_mult():
     cheb1 = MultiCheb(test1)
     cheb2 = MultiCheb(test2)
     new_cheb = cheb1*cheb2
-    truth = MultiCheb(np.array([[4, 3.5, 1],[5,9,1],[3,1.5,0]]))
-    assert np.allclose(new_cheb.coeff.all() ,truth.coeff.all())
+    truth = np.array([[4, 3.5, 1],[5,9,1],[3,1.5,0]])
+
+    assert np.allclose(new_cheb.coeff.all() ,truth.all())
 
 def test_mult_diff():
     '''
@@ -31,8 +32,9 @@ def test_mult_diff():
     c1 = MultiCheb(np.arange(0,4).reshape(2,2))
     c2 = MultiCheb(np.ones((2,1)))
     p = c1*c2
-    truth = MultiCheb(np.array([[1,2.5,0],[2,4,0],[1,1.5,0]]))    
-    assert np.allclose(p.coeff.all(),truth.coeff.all())
+    truth = np.array([[1,2.5,0],[2,4,0],[1,1.5,0]])
+
+    assert np.allclose(p.coeff.all(),truth.all())
 
 def test_mon_mult():
     mon = (1,2)

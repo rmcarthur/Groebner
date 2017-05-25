@@ -1,6 +1,7 @@
 import numpy as np
+import random
 import os,sys
-sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
+sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('\\')[:-1]) + '/groebner')
 from multi_power import MultiPower
 import pytest
 
@@ -19,9 +20,10 @@ def test_mult():
     p1 = MultiPower(test1)
     p2 = MultiPower(test2)
     new_poly = p1*p2
-    truth = MultiPower(np.array([[0, 2, 2],[4,9,2],[6,3,0]]))
-    assert np.allclose(new_poly.coeff, truth.coeff)
-   
+    truth = np.array([[0, 2, 2],[4,9,2],[6,3,0]])
+    assert np.allclose(new_poly.coeff, truth)
+
+
 
 def test_generator():
     poly = MultiPower(np.array([[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]))
@@ -135,10 +137,14 @@ def test_generator():
             assert (idx == [ 0.,  0.,  0.,  1.]).all()
         elif(i == 24):
             assert (idx == [ 0.,  0.,  0.,  0.]).all()
+
 '''
 def test_mon_mult():
-
-    polynomial =
+    dim_options = [2,3,5,8,15,16,41]
+    dim1 = dim_options[random.randint(1,7)]
+    dim2 = dim_options[random.randint(1,7)]
+    polynomial = np.random.randint(100, size = (dim1,dim2))
     for i in range(20):
-        monomial = x**i
-'''
+        for j in range(20):
+            mon = (i,j)
+            '''
