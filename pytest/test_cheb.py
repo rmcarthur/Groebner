@@ -20,7 +20,7 @@ def test_mult():
     cheb1 = MultiCheb(test1)
     cheb2 = MultiCheb(test2)
     new_cheb = cheb1*cheb2
-    truth = np.array([[4, 3.5, 1],[5,9,1],[3,1.5,0]]) 
+    truth = np.array([[4, 3.5, 1],[5,9,1],[3,1.5,0]])
     
     assert np.allclose(new_cheb.coeff.all() ,truth.all())
 
