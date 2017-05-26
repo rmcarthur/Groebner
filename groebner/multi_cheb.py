@@ -72,8 +72,8 @@ class MultiCheb(Polynomial):
         add_b_list = np.zeros((2,len(new_shape)))
         add_a_list[:,1] = add_a
         add_b_list[:,1] = add_b
-        a = MultiCheb(np.pad(a.coeff,add_a_list.astype(int),'constant'))
-        b = MultiCheb(np.pad(b.coeff,add_b_list.astype(int),'constant'))
+        a = MultiCheb(np.pad(a.coeff,add_a_list.astype(int),'constant'), clean_zeros = False)
+        b = MultiCheb(np.pad(b.coeff,add_b_list.astype(int),'constant'), clean_zeros = False)
         return a,b
 
     def __mul__(self,other):
@@ -110,30 +110,31 @@ class MultiCheb(Polynomial):
         the values of the Chebychev polynomial. For example T_2(x)T_3(y) would
         be (2,3). This is idx and P is the polynomial in matrix form.
         '''
+        original = self
         if len(idx) == 2:
             pad_values = list()
             for i in idx: #iterates through monomial and creates a tuple of pad values for each dimension
                 pad_dim_i = (i,0)
                 #In np.pad each dimension is a tuple of (i,j) where i is how many to pad in front and j is how many to pad after.
                 pad_values.append(pad_dim_i)
-            p1 = np.pad(self, (pad_values), 'constant', constant_values = 0)
+            p1 = np.pad(original, (pad_values), 'constant', constant_values = 0)
 
             row,col  = idx
-            num_rows,num_col = self.shape
-            sol = np.zeros_like(self, dtype = np.float)
-            sol[:1:,:] = self[row:row+1:,:]
+            num_rows,num_col = original.shape
+            sol = np.zeros_like(original)
+            sol[:1:,:] = original[row:row+1:,:]
             for n in range(num_rows):
                 if row-n-1 < 0:
                     if row+n+2 > num_rows:
                         break
                     else:
-                        sol[n+1:n+2:,::] = self[row+n+1:row+n+2:,::]
+                        sol[n+1:n+2:,::] = original[row+n+1:row+n+2:,::]
                 else:
                     if row+n+2 > num_rows:
-                        sol[n+1:n+2:,::] = self[row-n-1:row-n:,::]
+                        sol[n+1:n+2:,::] = original[row-n-1:row-n:,::]
                     else:
-                        sol[n+1:n+2:,::] = self[row-n-1:row-n:,::] + self[row+n+1:row+n+2:,::]
-            sol2 = np.zeros_like(self, dtype = np.float)
+                        sol[n+1:n+2:,::] = original[row-n-1:row-n:,::] + original[row+n+1:row+n+2:,::]
+            sol2 = np.zeros_like(original)
             sol2[::,:1:] = sol[::,col:col+1:]
             for n in range(num_col):
                 if col-n-1 < 0:
@@ -152,6 +153,7 @@ class MultiCheb(Polynomial):
             add_width = fsol_width - sol2_width
             p2 = np.pad(sol2, ((0,add_length),(0,add_width)), 'constant', constant_values = 0)
             Pf = (p1+p2)
+            Pf = Pf.astype(float)
             Pf = .5*Pf
             return MultiCheb(Pf)
 
@@ -162,24 +164,26 @@ class MultiCheb(Polynomial):
                 pad_dim_i = (i,0)
                 #In np.pad each dimension is a tuple of (i,j) where i is how many to pad in front and j is how many to pad after.
                 pad_values.append(pad_dim_i)
-            p1 = np.pad(self, (pad_values), 'constant', constant_values = 0)
+            p1 = np.pad(original, (pad_values), 'constant', constant_values = 0)
 
             row,col,depth  = idx #row, col, depth correspond to the row, column, and depth of where the matrix will be folded.
-            num_rows,num_col,num_z = self.shape #sets variables for the shape of thee polynomial input
-            sol = np.zeros_like(self, dtype = np.float)
-            sol[:1:,:,:] = self[row:row+1:,:,:]
+            num_rows,num_col,num_z = original.shape #sets variables for the shape of thee polynomial input
+            sol = np.zeros_like(original)
+            sol[:1:,:,:] = original[row:row+1:,:,:]
+
             for n in range(num_rows):
                 if row-n-1 < 0:
                     if row+n+2 > num_rows:
                         break
                     else:
-                        sol[n+1:n+2:,:,:] = self[row+n+1:row+n+2:,:,:]
+                        sol[n+1:n+2:,:,:] = original[row+n+1:row+n+2:,:,:]
                 else:
                     if row+n+2 > num_rows:
-                        sol[n+1:n+2:,:,:] = self[row-n-1:row-n:,:,:]
+                        sol[n+1:n+2:,:,:] = original[row-n-1:row-n:,:,:]
                     else:
-                        sol[n+1:n+2:,:,:] = self[row-n-1:row-n:,:,:] + self[row+n+1:row+n+2:,:,:]
-            sol2 = np.zeros_like(self, dtype = np.float)
+                        sol[n+1:n+2:,:,:] = original[row-n-1:row-n:,:,:] + original[row+n+1:row+n+2:,:,:]
+
+            sol2 = np.zeros_like(original)
             sol2[::,:1:,:] = sol[::,col:col+1:,:]
             for n in range(num_col):
                 if col-n-1 < 0:
@@ -192,7 +196,7 @@ class MultiCheb(Polynomial):
                         sol2[::,n+1:n+2:,:] = sol[::,col-n-1:col-n:,:]
                     else:
                         sol2[::,n+1:n+2:,:] = sol[::,col-n-1:col-n:,:] + sol[::,col+n+1:col+n+2:,:]
-            sol3 = np.zeros_like(self, dtype = np.float)
+            sol3 = np.zeros_like(original)
             sol3[:,:,:1:] = sol2[:,:,depth:depth+1:]
             for n in range(num_z):
                 if depth-n-1 < 0:
