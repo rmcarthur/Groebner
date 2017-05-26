@@ -1,7 +1,7 @@
 import numpy as np
 import os, sys
 sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
-from vector_space import VectorSpace
+from root_finder import RootFinder
 from multi_power import MultiPower
 from multi_cheb import MultiCheb
 import pytest
@@ -12,8 +12,8 @@ def test_makeBasis():
     f2 = MultiPower(np.array([[0,0,0],[-1,0,1],[0,0,0]]))
     f3 = MultiPower(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]))
     G = [f1, f2, f3]
-    vs = VectorSpace(G)
-    basis = vs.basis
+    rf = RootFinder(G)
+    basis = rf.vectorBasis
     trueBasis = [(0,0), (1,0), (0,1), (1,1), (0,2)]
 
     assert (len(basis) == len(trueBasis)) and (m in basis for m in trueBasis), \
@@ -35,8 +35,15 @@ def test_makeBasis():
     f6 = MultiPower(f6_coeff)
 
     G = [f1, f2, f3, f4, f5, f6]
-    basis = vs.makeBasis(G)
+    basis = rf.makeVectorBasis(G)
     trueBasis = [(0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,0,1),(0,0,2),(1,0,1),(0,1,1)]
 
     assert (len(basis) == len(trueBasis)) and (m in basis for m in trueBasis), \
             "Failed on MultiPower in 3 vars."
+
+def testCoordinateVector():
+    f1 = MultiCheb(np.array([[0,-1.5,.5],[-1.5,1.5,0],[1,0,0]]))
+    f2 = MultiCheb(np.array([[0,0,0],[-1,0,1],[0,0,0]]))
+    f3 = MultiCheb(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]))
+    G = [f1, f2, f3]
+    rf = RootFinder(G)
