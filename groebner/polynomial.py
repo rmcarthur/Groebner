@@ -5,7 +5,7 @@ import itertools
 
 
 class Polynomial(object):
-    def __init__(self, coeff, order='degrevlex', lead_term=None, clean_zeros = True):
+    def __init__(self, coeff, order='degrevlex', monic=True, lead_term=None, clean_zeros = True):
         '''
         terms, int- number of chebyshev polynomials each variable can have. Each dimension will have term terms
         dim, int- number of different variables, how many dim our tensor will be
@@ -20,7 +20,7 @@ class Polynomial(object):
         self.shape = self.coeff.shape
         self.max_term = np.max(self.shape) - 1
         if lead_term is None:
-            self.update_lead_term()
+            self.update_lead_term(monic)
         else:
             self.lead_term = lead_term
 
@@ -160,7 +160,7 @@ class Polynomial(object):
                 monomials.append(index)
         return monomials
 
-    def update_lead_term(self,start = None):
+    def update_lead_term(self,monic,start = None):
         found = False
         if self.order == 'degrevlex':
             gen = self.degrevlex_gen()
@@ -174,7 +174,8 @@ class Polynomial(object):
         if not found:
             self.lead_term = None
             self.lead_coeff = 0
-        else:
+        elif (monic):
             self.coeff = self.coeff/self.lead_coeff
             self.lead_coeff = 1.
+
         #print('Leading Coeff is {}'.format(self.lead_term))

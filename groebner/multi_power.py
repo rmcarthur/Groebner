@@ -29,8 +29,8 @@ class MultiPower(Polynomial):
         output- the next step in ordering
     """
 
-    def __init__(self, coeff, order='degrevlex', lead_term=None, clean_zeros = True):
-        super(MultiPower, self).__init__(coeff, order, lead_term, clean_zeros)
+    def __init__(self, coeff, order='degrevlex', monic=True, lead_term=None, clean_zeros = True):
+        super(MultiPower, self).__init__(coeff, order, monic, lead_term, clean_zeros)
 
     def __add__(self,other):
         '''
@@ -49,7 +49,7 @@ class MultiPower(Polynomial):
         here we add leading terms?
         '''
         return MultiPower(fftconvolve(self.coeff, other.coeff))
-    
+
     def __eq__(self,other):
         '''
         check if coeff matrix is the same
@@ -58,7 +58,7 @@ class MultiPower(Polynomial):
             return False
         else:
             return np.allclose(self.coeff, other.coeff)
-    
+
     def __ne__(self,other):
         '''
         check if coeff matrix is not the same same

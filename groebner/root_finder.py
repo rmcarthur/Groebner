@@ -80,7 +80,19 @@ class RootFinder(object):
         return basis
 
     def multOperatorMatrix(self, poly):
-        pass
+        dim = self.vectorSpaceDimension
+        multOperatorMatrix = np.zeros((dim, dim))
+
+        for i in range(dim):
+            monomial = self.vectorBasis[i]
+            poly_ = poly.mon_mult(monomial)
+            print("Before reduce:\n", poly_.coeff)
+            poly_ = self.getRemainder(poly_)
+            print("After reduce:\n", poly_.coeff)
+
+            multOperatorMatrix[:,i] = self.coordinateVector(poly_)
+
+        return multOperatorMatrix
 
     def coordinateVector(self, reducedPoly):
         '''
@@ -135,4 +147,4 @@ class RootFinder(object):
         polynomial object
             the unique remainder of poly divided by self.GB
         '''
-        return self.Groebner.reduce_poly(polynomial, self.GB)
+        return self.Groebner.reduce_poly(poly, self.GB, False)
