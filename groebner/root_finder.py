@@ -86,9 +86,7 @@ class RootFinder(object):
         for i in range(dim):
             monomial = self.vectorBasis[i]
             poly_ = poly.mon_mult(monomial)
-            print("Before reduce:\n", poly_.coeff)
             poly_ = self.getRemainder(poly_)
-            print("After reduce:\n", poly_.coeff)
 
             multOperatorMatrix[:,i] = self.coordinateVector(poly_)
 
@@ -147,4 +145,4 @@ class RootFinder(object):
         polynomial object
             the unique remainder of poly divided by self.GB
         '''
-        return self.Groebner.reduce_poly(poly, self.GB, False)
+        return self.Groebner.reduce_poly(poly, self.GB)

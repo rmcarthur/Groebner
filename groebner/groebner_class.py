@@ -135,7 +135,7 @@ class Groebner(object):
             pass
         return non_zeros
 
-    def reduce_poly(self, poly, divisors=[], monic=True):
+    def reduce_poly(self, poly, divisors=[]):
         """
         Divides a polynomial by the polynomials we already have to see if it contains any new info
         """
@@ -165,9 +165,11 @@ class Groebner(object):
 
                     new_coeff = pad_poly.coeff-(poly.lead_coeff/other.lead_coeff)*pad_new.coeff
                     new_coeff[np.where(abs(new_coeff) < 1.e-10)]=0 #Get rid of floating point errors to make more stable
-                    poly.__init__(new_coeff, monic=monic)
+                    poly.__init__(new_coeff)
+                    print("Poly coeff: ", poly.coeff)
                     #print(poly.coeff)
                     change = True
+                    print("after true: ", change)
                     pass
                 pass
             pass
