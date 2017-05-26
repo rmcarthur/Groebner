@@ -1,6 +1,6 @@
 import numpy as np
 import os, sys
-sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
+sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('\\')[:-1]) + '/groebner')
 from multi_cheb import MultiCheb
 import pytest
 import pdb
@@ -32,13 +32,7 @@ def test_mult_diff():
     c1 = MultiCheb(np.arange(0,4).reshape(2,2))
     c2 = MultiCheb(np.ones((2,1)))
     p = c1*c2
-<<<<<<< HEAD
     truth = np.array([[1,2.5,0],[2,4,0],[1,1.5,0]])
-=======
-    truth = MultiCheb(np.array([[1,2.5,0],[2,4,0],[1,1.5,0]]))
-    
-    assert np.allclose(p.coeff.all(),truth.coeff.all())
->>>>>>> 9b9fab9787d7cfd50f0e30b9c6d01bc6cf3eac6a
 
     assert np.allclose(p.coeff.all(),truth.all())
 
