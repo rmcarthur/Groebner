@@ -1,6 +1,9 @@
 import numpy as np
 import os,sys
-sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
+if (os.name == 'nt'):
+    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('\\')[:-1]) + '/groebner')
+else:
+    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
 from multi_power import MultiPower
 import pytest
 
@@ -21,7 +24,7 @@ def test_mult():
     new_poly = p1*p2
     truth = MultiPower(np.array([[0, 2, 2],[4,9,2],[6,3,0]]))
     assert np.allclose(new_poly.coeff, truth.coeff)
-   
+
 
 def test_generator():
     poly = MultiPower(np.array([[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]))

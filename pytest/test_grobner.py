@@ -1,7 +1,13 @@
 import numpy as np
 import os, sys
 from itertools import permutations
-sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
+
+if (os.name == 'nt'):
+    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('\\')[:-1]) + '/groebner')
+else:
+    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
+print(os.path.dirname(os.path.abspath(__file__)).split('\\'))
+
 import maxheap
 from multi_power import MultiPower
 from groebner_class import Groebner
@@ -198,4 +204,4 @@ def test_phi_criterion():
     # Currently, the test fails when phi criterion is not used. Will need to figure out solution! 
     #assert(len(basis1)==len(basis2)) 
     
-    
+

@@ -18,12 +18,12 @@ class Polynomial(object):
         self.terms = np.prod(self.coeff.shape)
         self.order = order
         self.shape = self.coeff.shape
-        self.max_term = np.max(self.shape) -1
+        self.max_term = np.max(self.shape) - 1
         if lead_term is None:
             self.update_lead_term()
         else:
             self.lead_term = lead_term
-    
+
     def clean_coeff(self):
         """
         Gets rid of any 0's on the outside of the coeff matrix, not giving any info.
@@ -145,6 +145,21 @@ class Polynomial(object):
                             yield base-current
             return
 
+    def monomialList(self):
+        '''
+        return
+        ------
+        monomials : list of tuples
+            list of monomials that make up the polynomial in degrevlex order
+        '''
+        monomials = []
+        gen = self.degrevlex_gen()
+        for index in gen:
+            index = tuple(map(lambda i: int(i), index))
+            if (self.coeff[index] != 0):
+                monomials.append(index)
+        return monomials
+
     def update_lead_term(self,start = None):
         found = False
         if self.order == 'degrevlex':
@@ -162,4 +177,5 @@ class Polynomial(object):
         else:
             self.coeff = self.coeff/self.lead_coeff
             self.lead_coeff = 1.
+
         #print('Leading Coeff is {}'.format(self.lead_term))
