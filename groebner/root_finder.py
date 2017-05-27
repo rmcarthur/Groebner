@@ -87,7 +87,7 @@ class RootFinder(object):
             monomial = self.vectorBasis[i]
             poly_ = poly.mon_mult(monomial)
             poly_ = self.getRemainder(poly_)
-
+            
             multOperatorMatrix[:,i] = self.coordinateVector(poly_)
 
         return multOperatorMatrix
