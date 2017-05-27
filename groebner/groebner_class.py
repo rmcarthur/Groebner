@@ -15,7 +15,7 @@ class Groebner(object):
         '''
         polys -- a list of polynomials that generate your ideal
         self.old_polys - The polynomials that have already gone through the solve loop once. Starts as none.
-        self.new_polys - New polynomials that have never been throught the solve loop. All of them at first.
+        self.new_polys - New polynomials that have never been through the solve loop. All of them at first.
         self.np_matrix - The full matrix of polynomials.
         self.term_set - The set of monomials in the matrix.
         self.lead_term_set - The set of monomials that are lead terms of some polynomial in the matrix.
@@ -490,3 +490,4 @@ class Groebner(object):
         matrix[np.where(abs(matrix) < 1.e-10)]=0
         return matrix
         pass
+      
