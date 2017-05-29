@@ -1,7 +1,10 @@
 import numpy as np
 import os, sys
 from itertools import permutations
-sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
+if (os.name == 'nt'):
+    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('\\')[:-1]) + '/groebner')
+else:
+    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
 print(os.path.dirname(os.path.abspath(__file__)).split('\\'))
 import maxheap
 from multi_power import MultiPower
@@ -125,4 +128,3 @@ def test_solve():
     X = MultiPower(np.array([[1.]]))
     x1 = grob.solve()
     assert(X == x1[0])
-    

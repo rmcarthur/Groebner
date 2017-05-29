@@ -1,6 +1,9 @@
 import numpy as np
 import os, sys
-sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
+if (os.name == 'nt'):
+    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('\\')[:-1]) + '/groebner')
+else:
+    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
 from multi_cheb import MultiCheb
 import pytest
 import pdb
@@ -39,6 +42,13 @@ def test_mon_mult():
     Poly = MultiCheb(np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]]))
     mon_matr = MultiCheb(np.array([[0,0,0,0],[0,0,1,0],[0,0,0,0],[0,0,0,0]]))
     P1 = mon_matr*Poly
-    P2 = MultiCheb.mon_mult(Poly, mon)
+    P2 = MultiCheb.mon_mult(Poly.coeff, mon)
+
+    mon2 = (0,1,1)
+    Poly2 = MultiCheb(np.arange(1,9).reshape(2,2,2))
+    mon_matr2 = MultiCheb(np.array([[[0,0],[0,1]],[[0,0],[0,0]]]))
+    #T1 = mon_matr2*Poly2
+    T2 = MultiCheb.mon_mult(Poly2.coeff, mon2)
 
     assert np.allclose(P1.coeff.all(), P2.coeff.all())
+    #assert np.allclose(T1.coeff.all(), T2.coeff.all())

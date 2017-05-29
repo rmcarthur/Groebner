@@ -1,3 +1,4 @@
 {
   "pytest/test_cheb.py::test_mon_mult": true
+  "pytest/test_cheb.py": true
 }
