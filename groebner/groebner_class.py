@@ -338,24 +338,93 @@ class Groebner(object):
         b_diff = tuple([i-j for i,j in zip(lcm, b.lead_term)])
         return a.mon_mult(a_diff), b.mon_mult(b_diff)
 
-    def add_phi_to_matrix(self):
+    
+    
+    def add_phi_to_matrix(self,phi = True):
         '''
         Takes all new possible combinations of phi polynomials and adds them to the Groebner Matrix
         Includes some checks to throw out unnecessary phi's
         '''
-        for i,j in itertools.combinations(self.new_polys+self.old_polys,2):
-            # This prevents calculation of phi with combinations of old_f exclusively.
-            if i not in self.old_polys:
-                # Relative prime check: If the elementwise multiplication of list i and j are all zeros, calculation of phi is not needed.
-                #(I separated the if statements for better visibility reasons, if it's better to combine, please fix!)
-                if not all([ a == 0 or b ==0 for a,b in zip(i.lead_term, j.lead_term)]):
-                # Calculate the phi's.
-                    p_a , p_b = self.calc_phi(i,j)
-                    # Add the phi's on to the Groebner Matrix.
-                    self._add_poly_to_matrix(p_a)
-                    self._add_poly_to_matrix(p_b)
+
+        
+        # Find the set of all pairs of index the function will run through
+        
+        # Index_new iterate the tuple of every combination of the new_polys. 
+        index_new = itertools.combinations(range(len(self.new_polys)),2)
+        # Index_oldnew iterates the tuple of every combination of new and old polynomials 
+        index_oldnew = itertools.product(range(len(self.new_polys)),range(len(self.new_polys), 
+                                               len(self.old_polys)+len(self.new_polys)))
+        B = set(itertools.chain(index_new,index_oldnew))
+        
+        # Iterating through both possible combinations. 
+        while B:
+            i,j = B.pop()
+            if self.phi_criterion(i,j,B,phi)== True:
+                #calculate the phi's.
+                poly = self.new_polys + self.old_polys
+                p_a , p_b = self.calc_phi(poly[i],poly[j])
+                # add the phi's on to the Groebner Matrix. 
+                self._add_poly_to_matrix(p_a)
+                self._add_poly_to_matrix(p_b)
         self.clean_matrix()
+        
         pass
+    
+    def phi_criterion(self,i,j,B,phi):
+        # Need to run tests 
+        '''
+        Parameters: 
+        i (int) : the index of the first polynomial 
+        j (int) : the index of the second polynomial 
+        B (set) : index of the set of polynomials to be considered. 
+    	
+        Returns: 
+    	   (bool) : returns False if 
+                1) The polynomials at index i and j are relative primes or
+                2) there exists an l such that (i,l) or (j,l) will not be considered in
+                the add_phi_to_matrix() method and LT(l) divides lcm(LT(i),LT(j)), 
+                otherwise, returns True. 
+    	   * See proposition 8 in "Section 10: Improvements on Buchburger's algorithm."
+	   '''
+        if phi == False:
+            return True
+        # List of new and old polynomials. 
+        polys = self.new_polys+self.old_polys
+        
+        # Relative Prime check: If the lead terms of i and j are relative primes, phi is not needed
+        if all([a*b == 0 for a,b in zip(polys[i].lead_term,polys[j].lead_term)]):
+            return False
+        
+        else: 
+        # Another criterion 
+            for l in range(len(polys)):
+                print ("For l = {}:".format(l))
+                
+                # Checks that l is not j or i. 
+                if l == j or l == i:
+                    print("\t{} is i or j".format(l))
+                    continue 
+                
+                # Sorts the tuple (i,l) or (l,i) in order of smaller to bigger. 
+                i_tuple = tuple(sorted((i,l)))
+                j_tuple = tuple(sorted((j,l)))
+                
+                # i_tuple and j_tuple needs to not be in B. 
+                if j_tuple in B or i_tuple in B:
+                    print('\t{} or {} is in B'.format(j_tuple,i_tuple))
+                    continue
+                
+                lcm = self._lcm(polys[i],polys[j])
+                lead_l = polys[l].lead_term
+                        
+                # See if LT(poly[l]) divides lcm(LT(i),LT(j)) 
+                if all([i-j>=0 for i,j in zip(lcm,lead_l)]) :
+                    print("\tLT of poly[l] divides lcm(LT(i),LT(j)")
+                    return False 
+                
+        # Function will return True and calculate phi if none of the checks passed for all l's. 
+        return True 
+    
 
     def _build_maxheap(self):
         '''
