@@ -81,6 +81,8 @@ class Polynomial(object):
         '''
         yields grevlex ordering co-ordinates in order to find
         the leading coefficent
+        Note - this is just meant to quickly find the leading coefficient. For trying to grab all the non-zero
+        terms     for i in zip(*np.where(poly.coeff != 0)):  will be much faster.
         '''
         max_values = tuple(self.shape)-np.ones_like(self.shape)
         base = max_values
@@ -97,6 +99,7 @@ class Polynomial(object):
                 yield base - current
                 while onward:
                     #Find the leftmost thing
+                    #left_most_spot = np.where(current != 0)[0][0]
                     for j in range(0, self.dim):
                         if(current[j] != 0):
                             left_most_spot = j

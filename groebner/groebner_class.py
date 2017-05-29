@@ -8,6 +8,7 @@ from multi_cheb import MultiCheb
 from multi_power import MultiPower
 from scipy.linalg import lu
 from scipy.linalg import qr
+from maxheap import Term
 
 class Groebner(object):
 
@@ -17,8 +18,12 @@ class Groebner(object):
         self.old_polys - The polynomials that have already gone through the solve loop once. Starts as none.
         self.new_polys - New polynomials that have never been throught the solve loop. All of them at first.
         self.np_matrix - The full matrix of polynomials.
-        self.term_set - The set of monomials in the matrix.
-        self.lead_term_set - The set of monomials that are lead terms of some polynomial in the matrix.
+        self.term_set - The set of monomials in the matrix. Contains Terms.
+        self.lead_term_set - The set of monomials that are lead terms of some polynomial in the matrix. Contains Terms.
+        These next three are used to determine what polynomials to keep after reduction.
+        self.original_lms - The leading Terms of the original polynomials (not phi's or r's). Keep these as old_polys.
+        self.not_needed_lms - The leading terms that have another leading term that divided them. We won't keep these.
+        self.duplicate_lms - The leading terms that occur multiple times. Keep these as old_polys
         '''
         # Check polynomial types
         if all([type(p) == MultiPower for p in polys]):
@@ -30,10 +35,14 @@ class Groebner(object):
             raise ValueError('Bad polynomials in list')        
         
         self.old_polys = list()
-        self.new_polys = self.reduce_polys(polys)
+        #self.new_polys = self.reduce_polys(polys)
+        self.new_polys = polys
         self.np_matrix = np.array([])
         self.term_set = set()
         self.lead_term_set = set()
+        self.original_lms = set()
+        self.not_needed_lms = set()
+        self.duplicate_lms = set()
         #for p in self.new_polys:
         #    print(p.coeff)
     
@@ -46,13 +55,18 @@ class Groebner(object):
         self.np_matrix = np.array([])
         self.term_set = set()
         self.lead_term_set = set()
+        self.original_lms = set()
+        self.not_needed_lms = set()
+        self.duplicate_lms = set()
         
-        self.new_polys = self.reduce_polys(self.new_polys+self.old_polys)
-        self.old_polys = list()
+        #self.new_polys = self.reduce_polys(self.new_polys+self.old_polys)
+        #self.old_polys = list()
+        for p in self.new_polys + self.old_polys:
+            if p.lead_term != None:
+                self.original_lms.add(Term(p.lead_term))
         
-        self._add_polys(self.new_polys)
-        self._add_polys(self.old_polys)
-        self.clean_matrix()
+        self._add_polys(self.new_polys + self.old_polys)
+        #self.clean_matrix()
         pass
     
     def solve(self, qr_reduction = True):
@@ -64,6 +78,7 @@ class Groebner(object):
         i=1 #Tracks what loop we are on.
         while polys_were_added:
             print("Starting Loop #"+str(i))
+            print("Num Polys - ", len(self.new_polys + self.old_polys))
             print("Initializing")
             self.initialize_np_matrix()
             print(self.np_matrix.shape)
@@ -75,10 +90,10 @@ class Groebner(object):
             print(self.np_matrix.shape)
             polys_were_added = self.reduce_matrix(qr_reduction = qr_reduction)
             i+=1
-            #if i > 1:
-            #    polys_were_added = False
-            #    self.old_polys += self.new_polys
         print("WE WIN")
+        #for p in self.old_polys:
+        #    print(p.coeff)
+        print("Reduced - ")
         return self.reduce_groebner_basis()
         pass
     
@@ -99,30 +114,29 @@ class Groebner(object):
         change = True
         while change:
             change = False
-            for poly in polys:
-                for other in polys:
-                    if poly.lead_term == None or other.lead_term == None:
-                        continue #one of them is empty
-                    if other != poly and all([i-j >= 0 for i,j in zip(poly.lead_term,other.lead_term)]):
-                        monomial = tuple(np.subtract(poly.lead_term,other.lead_term))
-                        new = other.mon_mult(monomial)
-                        
-                        lcm = np.maximum(poly.coeff.shape, new.coeff.shape)
-                        
-                        poly_pad = np.subtract(lcm, poly.coeff.shape)
-                        poly_pad[np.where(poly_pad<0)]=0
-                        pad_poly = self.pad_back(poly_pad, poly)
-                        
-                        new_pad = np.subtract(lcm, new.coeff.shape)
-                        new_pad[np.where(new_pad<0)]=0
-                        pad_new = self.pad_back(new_pad,new)
-                                                
-                        new_coeff = pad_poly.coeff-(poly.lead_coeff/other.lead_coeff)*pad_new.coeff
-                        new_coeff[np.where(abs(new_coeff) < 1.e-10)]=0 #Get rid of floating point errors to make more stable
-                        poly.__init__(new_coeff)
-                        #print(poly.coeff)
-                        change = True
-                        pass
+            for poly, other in itertools.permutations(polys,2):
+                if poly.lead_term == None or other.lead_term == None:
+                    continue #one of them is empty
+                if other != poly and all([i-j >= 0 for i,j in zip(poly.lead_term,other.lead_term)]):
+                    monomial = tuple(np.subtract(poly.lead_term,other.lead_term))
+                    new = other.mon_mult(monomial) #New polynomial with same lead_term as poly
+                    
+                    #Pad the polynomials so they have the same shape and can be subtracted
+                    lcm = np.maximum(poly.coeff.shape, new.coeff.shape)
+                    
+                    poly_pad = np.subtract(lcm, poly.coeff.shape)
+                    poly_pad[np.where(poly_pad<0)]=0
+                    pad_poly = self.pad_back(poly_pad, poly)
+                    
+                    new_pad = np.subtract(lcm, new.coeff.shape)
+                    new_pad[np.where(new_pad<0)]=0
+                    pad_new = self.pad_back(new_pad,new)
+                    
+                    new_coeff = pad_poly.coeff-pad_new.coeff
+                    new_coeff[np.where(abs(new_coeff) < 1.e-10)]=0 #Get rid of floating point errors to make more stable
+                    poly.__init__(new_coeff)
+                    #print(poly.coeff)
+                    change = True
                     pass
                 pass
             pass
@@ -255,26 +269,24 @@ class Groebner(object):
         adding_r is only true when the r's are being added, this way it knows to keep adding new monomials to the heap
         for further r calculation
         '''
-        self.lead_term_set.add(p.lead_term)
+        self.lead_term_set.add(Term(p.lead_term))
         
         #Adds a new row of 0's if the matrix has any width
         if(self.np_matrix.shape[0] != 0):
             zero_poly = np.zeros((1,self.np_matrix.shape[1]))
-            self.np_matrix = np.vstack((zero_poly,self.np_matrix))
+            self.np_matrix = np.vstack((self.np_matrix,zero_poly))
         
-        for idx in p.degrevlex_gen():
-            idx_term = maxheap.Term(tuple(idx)) #Get a term object 
+        for idx in zip(*np.where(p.coeff != 0)):
+            idx_term = Term(tuple(idx)) #Get a term object 
             # Grab each non-zero element, put it into matrix. 
             idx_term.val = tuple(map(lambda i: int(i), idx_term.val))
             coeff_val = p.coeff[idx_term.val] 
 
-            if(coeff_val == 0):
-                continue
             # If already in idx_list
             if idx_term in self.term_set:
                 # get index of label and np matrix to put into
-                idx_where = np.argmax([i == idx_term for i in self.matrix_terms]) 
-                self.np_matrix[0,idx_where] = coeff_val
+                idx_where = np.argmax([i.val == idx_term.val for i in self.matrix_terms]) 
+                self.np_matrix[-1,idx_where] = coeff_val
 
             # If new column needed
             else:
@@ -282,7 +294,7 @@ class Groebner(object):
                 self.term_set.add(idx_term)
                 #If r's being added, adds new monomial to the heap
                 if adding_r:
-                    if(idx_term.val not in self.lead_term_set):
+                    if(idx_term not in self.lead_term_set):
                         self.monheap.heappush(idx_term)
                 length_of_matrix = self.np_matrix.shape[0]
                 if length_of_matrix == 0:
@@ -291,7 +303,7 @@ class Groebner(object):
                     zeros = np.zeros((length_of_matrix,1))
                     self.np_matrix = np.hstack((self.np_matrix, zeros))
                 self.matrix_terms.append(idx_term)
-                self.np_matrix[0,-1] = coeff_val
+                self.np_matrix[-1,-1] = coeff_val
         pass
 
     def _add_polys(self, p_list):
@@ -332,6 +344,15 @@ class Groebner(object):
         #updated to use monomial multiplication. Will crash for MultiCheb until that gets added
         a_diff = tuple([i-j for i,j in zip(lcm, a.lead_term)])
         b_diff = tuple([i-j for i,j in zip(lcm, b.lead_term)])
+        
+        #Keeping track of lead_terms
+        if sum(a_diff)==0 and sum(b_diff)==0:
+            self.duplicate_lms.add(Term(a.lead_term))
+        elif sum(a_diff)==0:
+            self.not_needed_lms.add(Term(a.lead_term))
+        elif sum(b_diff)==0:
+            self.not_needed_lms.add(Term(b.lead_term))
+        
         return a.mon_mult(a_diff), b.mon_mult(b_diff)
     
     def add_phi_to_matrix(self):
@@ -350,6 +371,7 @@ class Groebner(object):
                     # Add the phi's on to the Groebner Matrix. 
                     self._add_poly_to_matrix(p_a)
                     self._add_poly_to_matrix(p_b)
+                                        
         self.clean_matrix()
         pass
     
@@ -359,7 +381,7 @@ class Groebner(object):
         '''
         self.monheap = maxheap.MaxHeap()        
         for mon in self.term_set:
-            if(mon.val not in self.lead_term_set): #Adds every monomial that isn't a lead term to the heap
+            if(mon not in self.lead_term_set): #Adds every monomial that isn't a lead term to the heap
                 self.monheap.heappush(mon)
         pass
 
@@ -398,43 +420,34 @@ class Groebner(object):
         Reduces the matrix fully using either QR or LU decomposition. Adds the new_poly's to old_poly's, and adds to
         new_poly's any polynomials created by the reduction that have new leading monomials.
         Returns-True if new polynomials were found, False otherwise.
-        '''
-        di={}
-        for i, j in zip(*np.where(self.np_matrix!=0)):
-            if i in di:
-                continue
-            else:
-                di[i]=j
-        old_lms = set(di.values())
-        
-        #print(self.np_matrix)
-        
+        '''        
         if qr_reduction:
             Q,R = qr(self.np_matrix)
+            #print(P)
             reduced_matrix = R
             reduced_matrix = self.fully_reduce(reduced_matrix)
         else:
             P,L,U = lu(self.np_matrix)
             reduced_matrix = U
             reduced_matrix = self.fully_reduce(reduced_matrix, qr_reduction = False)
-        
-        #Checks that it's fully reduced
-        #print(reduced_matrix)
-        reduced_matrix = self.fully_reduce(reduced_matrix)
-        #print(reduced_matrix)
-        
+                
         #Get the new polynomials
-        good_poly_spots = list()
+        new_poly_spots = list()
+        old_poly_spots = list()
         already_looked_at = set() #rows whose leading monomial we've already checked
         for i, j in zip(*np.where(reduced_matrix!=0)):
-            if i in already_looked_at:
+            if i in already_looked_at: #We've already looked at this row
                 continue
-            elif j in old_lms:
+            elif self.matrix_terms[j] in self.lead_term_set: #The leading monomial is not new.
+                if self.matrix_terms[j] in self.original_lms - (self.not_needed_lms - self.duplicate_lms): #Reduced old poly
+                    old_poly_spots.append(i)
                 already_looked_at.add(i)
                 continue
             else:
                 already_looked_at.add(i)
-                good_poly_spots.append(i) #This row gives a new leading monomial
+                new_poly_spots.append(i) #This row gives a new leading monomial
+            pass
+        '''
         self.old_polys = self.new_polys + self.old_polys
         self.new_polys = list()
         new_polys = self.sm_to_poly(good_poly_spots, reduced_matrix)
@@ -443,7 +456,10 @@ class Groebner(object):
             reduced_p = self.reduce_poly(p)
             if p.lead_term != None:
                 self.new_polys.append(p)
-                
+        '''
+        self.old_polys = self.sm_to_poly(old_poly_spots, reduced_matrix)
+        self.new_polys = self.sm_to_poly(new_poly_spots, reduced_matrix)
+        
         return len(self.new_polys) > 0
     
     
@@ -478,7 +494,6 @@ class Groebner(object):
 
                 matrix[first_zero: , i:] = sub_matrix
         return self.clean_zeros_from_matrix(matrix)
-        #return matrix
     
     def clean_zeros_from_matrix(self,matrix):
         '''
