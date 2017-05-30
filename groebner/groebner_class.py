@@ -426,6 +426,11 @@ class Groebner(object):
             #print(P)
             reduced_matrix = R
             reduced_matrix = self.fully_reduce(reduced_matrix)
+            print(reduced_matrix)
+            #reduced_matrix = self.rrqr_reduce(self.np_matrix)
+            #print(reduced_matrix)
+            #reduced_matrix = self.clean_zeros_from_matrix(reduced_matrix)
+            #print(reduced_matrix)
         else:
             P,L,U = lu(self.np_matrix)
             reduced_matrix = U
@@ -504,7 +509,45 @@ class Groebner(object):
         return matrix
         pass
     
-    
-    
+    def rrqr_reduce(self, matrix):
+        if matrix.shape[0]==0 or matrix.shape[1]==0:
+            return matrix
+        height = matrix.shape[0]
+        A = matrix[:height,:height] #Get the square submatrix
+        B = matrix[:,height:] #The rest of the matrix to the right
+        Q,R,P = qr(A, pivoting = True) #rrqr reduce it
+        diagonals = np.diagonal(R) #Go along the diagonals to find the rank
+        i = 0
+        while abs(diagonals[i]) > 1.e-10:
+            i += 1
+            if i == len(diagonals):
+                break
+        rank = i
+        if rank == height: #full rank, do qr on it
+            Q,R = qr(A)
+            A = R #qr reduce A
+            B = np.dot(np.transpose(Q),B) #Transform B the same way
+        else: #not full rank
+            A = R[:,P] #Switch the columns back
+            B = np.dot(np.transpose(Q),B) #Multiply B by Q transpose
+            #sub1 is the top part of the matrix, we will recursively reduce this
+            #sub2 is the bottom part of A, we will set this all to 0
+            #sub3 is the bottom part of B, we will recursively reduce this.
+            #All submatrices are then put back in the matrix and it is returned.
+            sub1 = np.hstack((A[:rank,],B[:rank,]))
+            result = self.rrqr_reduce(self.clean_zeros_from_matrix(sub1))
+            A[:rank,] = result[:,:height]
+            B[:rank,] = result[:,height:]
+            
+            sub2 = A[rank:,]
+            zeros = np.zeros_like(sub2)
+            A[rank:,] = np.zeros_like(sub2)
+            
+            sub3 = B[rank:,]
+            B[rank:,] = self.rrqr_reduce(self.clean_zeros_from_matrix(sub3))
+        
+        reduced_matrix = np.hstack((A,B))
+        
+        return self.clean_zeros_from_matrix(reduced_matrix) #returns the new reduced matrix
     
     
