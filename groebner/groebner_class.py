@@ -35,7 +35,6 @@ class Groebner(object):
             raise ValueError('Bad polynomials in list')        
         
         self.old_polys = list()
-        #self.new_polys = self.reduce_polys(polys)
         self.new_polys = polys
         self.np_matrix = np.array([])
         self.term_set = set()
@@ -43,8 +42,6 @@ class Groebner(object):
         self.original_lms = set()
         self.not_needed_lms = set()
         self.duplicate_lms = set()
-        #for p in self.new_polys:
-        #    print(p.coeff)
     
     def initialize_np_matrix(self):
         '''
@@ -59,14 +56,11 @@ class Groebner(object):
         self.not_needed_lms = set()
         self.duplicate_lms = set()
         
-        #self.new_polys = self.reduce_polys(self.new_polys+self.old_polys)
-        #self.old_polys = list()
         for p in self.new_polys + self.old_polys:
             if p.lead_term != None:
                 self.original_lms.add(Term(p.lead_term))
         
         self._add_polys(self.new_polys + self.old_polys)
-        #self.clean_matrix()
         pass
     
     def solve(self, qr_reduction = True):
@@ -90,6 +84,7 @@ class Groebner(object):
             print(self.np_matrix.shape)
             polys_were_added = self.reduce_matrix(qr_reduction = qr_reduction)
             i+=1
+            pass
         print("WE WIN")
         #for p in self.old_polys:
         #    print(p.coeff)
@@ -109,6 +104,7 @@ class Groebner(object):
 
     def reduce_polys(self, polys):
         """
+        WE NO LONGER USE THIS FUNCTION AS FAR AS I KNOW
         reduces the given list of polynomials and returns the non-zero ones
         """
         change = True
@@ -148,7 +144,7 @@ class Groebner(object):
             non_zeros.append(p)
             pass
         return non_zeros
-        
+
     def reduce_poly(self, poly):
         """
         Divides a polynomial by the polynomials we already have to see if it contains any new info
@@ -190,12 +186,24 @@ class Groebner(object):
         Turns the groebner basis into a reduced groebner basis
         '''
         groebner_basis = list()
+        #Checks if the polynomial 1 is in the basis. If so, this is the basis. This reuction won't happen earlier
+        #becasue of the phi criterion check
+        hasOne = False
         for poly in self.old_polys:
+            if poly.coeff.shape==(1,1):
+                hasOne = True
             if np.sum(np.sum(abs(poly.coeff))) > 1.e-10:
                 groebner_basis.append(poly)
                 pass
             pass
-        groebner_basis = self.reduce_polys(groebner_basis)
+        if hasOne:
+            groebner_basis = list()
+            for poly in self.old_polys:
+                if poly.coeff.shape==(1,1):
+                    groebner_basis.append(poly)
+                    break
+            pass
+        #groebner_basis = self.reduce_polys(groebner_basis)
         for p in groebner_basis:
             print(p.coeff)
             pass
@@ -211,6 +219,7 @@ class Groebner(object):
     
     def clean_matrix(self):
         '''
+        I don't think this is ever being used either.
         Gets rid of rows and columns in the np_matrix that are all zero.
         '''
         ##This would replace all small values in the matrix with 0.
@@ -232,7 +241,7 @@ class Groebner(object):
         self.np_matrix = self.np_matrix[non_zero_polynomial,:] #Only keeps the non_zero_polymonials
         pass
 
-    def sm_to_poly(self,idxs,reduced_matrix):
+    def sm_to_poly(self,rows,reduced_matrix):
         '''
         Takes a list of indicies corresponding to the rows of the reduced matrix and 
         returns a list of polynomial objects
@@ -246,8 +255,9 @@ class Groebner(object):
             # add 1 to each to compensate for constant term
             shape.append(max(matrix_term_vals, key=itemgetter(i))[i]+1)
         # Grabs each polynomial, makes coeff matrix and constructs object
-        for i in idxs:
+        for i in rows:
             p = reduced_matrix[i]
+            p[np.where(abs(p) < 1.e-10)] = 0
             coeff = np.zeros(shape)
             for j,term in enumerate(matrix_term_vals):
                 coeff[term] = p[j]
@@ -410,13 +420,13 @@ class Groebner(object):
             return False
         
         else: 
-        # Another criterion 
+        # Another criterion
             for l in range(len(polys)):
-                print ("For l = {}:".format(l))
+                #print ("For l = {}:".format(l))
                 
                 # Checks that l is not j or i. 
                 if l == j or l == i:
-                    print("\t{} is i or j".format(l))
+                    #print("\t{} is i or j".format(l))
                     continue 
                 
                 # Sorts the tuple (i,l) or (l,i) in order of smaller to bigger. 
@@ -425,7 +435,7 @@ class Groebner(object):
                 
                 # i_tuple and j_tuple needs to not be in B. 
                 if j_tuple in B or i_tuple in B:
-                    print('\t{} or {} is in B'.format(j_tuple,i_tuple))
+                    #print('\t{} or {} is in B'.format(j_tuple,i_tuple))
                     continue
                 
                 lcm = self._lcm(polys[i],polys[j])
@@ -433,7 +443,7 @@ class Groebner(object):
                         
                 # See if LT(poly[l]) divides lcm(LT(i),LT(j)) 
                 if all([i-j>=0 for i,j in zip(lcm,lead_l)]) :
-                    print("\tLT of poly[l] divides lcm(LT(i),LT(j)")
+                    #print("\tLT of poly[l] divides lcm(LT(i),LT(j)")
                     return False 
                 
         # Function will return True and calculate phi if none of the checks passed for all l's. 
@@ -486,15 +496,23 @@ class Groebner(object):
         Returns-True if new polynomials were found, False otherwise.
         '''        
         if qr_reduction:
-            Q,R = qr(self.np_matrix)
-            #print(P)
-            reduced_matrix = R
-            reduced_matrix = self.fully_reduce(reduced_matrix)
-            print(reduced_matrix)
-            #reduced_matrix = self.rrqr_reduce(self.np_matrix)
-            #print(reduced_matrix)
-            #reduced_matrix = self.clean_zeros_from_matrix(reduced_matrix)
-            #print(reduced_matrix)
+            #Get a full rank submatrix.
+            Q,R,P = qr(self.np_matrix, pivoting = True) #rrqr reduce it
+            PT = self.inverse_P(P)
+            diagonals = np.diagonal(R) #Go along the diagonals to find the rank
+            i = 0
+            while abs(diagonals[i]) > 1.e-10:
+                i += 1
+                if i == len(diagonals):
+                    break
+            rank = i
+            reorder = R[:,PT]
+            full_rank = reorder[:rank,]
+            
+            ##I think we could ignore the getting full rank and just use this line, as the full length would be found in
+            ##the recursion
+            ##full_rank = self.np_matrix
+            reduced_matrix = self.rrqr_reduce(full_rank)
         else:
             P,L,U = lu(self.np_matrix)
             reduced_matrix = U
@@ -516,24 +534,15 @@ class Groebner(object):
                 already_looked_at.add(i)
                 new_poly_spots.append(i) #This row gives a new leading monomial
             pass
-        '''
-        self.old_polys = self.new_polys + self.old_polys
-        self.new_polys = list()
-        new_polys = self.sm_to_poly(good_poly_spots, reduced_matrix)
-            
-        for p in new_polys:
-            reduced_p = self.reduce_poly(p)
-            if p.lead_term != None:
-                self.new_polys.append(p)
-        '''
+
         self.old_polys = self.sm_to_poly(old_poly_spots, reduced_matrix)
         self.new_polys = self.sm_to_poly(new_poly_spots, reduced_matrix)
         
         return len(self.new_polys) > 0
     
-    
     def fully_reduce(self, matrix, qr_reduction = True):
         '''
+        WE NO LONGER USE THIS FUNCTION
         Fully reduces the matrix by making sure all submatrices formed by taking out columns of zeros are
         also in upper triangular form. Does this recursively. Returns the reduced matrix.
         '''
@@ -563,9 +572,10 @@ class Groebner(object):
 
                 matrix[first_zero: , i:] = sub_matrix
         return self.clean_zeros_from_matrix(matrix)
-    
+
     def clean_zeros_from_matrix(self,matrix):
         '''
+        WE PROBABLY SHOULDN'T USE THIS FUNCTION.
         Gets rid of rows and columns in the np_matrix that are all zero.
         '''
         ##This would replace all small values in the matrix with 0.
@@ -580,6 +590,7 @@ class Groebner(object):
         A = matrix[:height,:height] #Get the square submatrix
         B = matrix[:,height:] #The rest of the matrix to the right
         Q,R,P = qr(A, pivoting = True) #rrqr reduce it
+        PT = self.inverse_P(P)
         diagonals = np.diagonal(R) #Go along the diagonals to find the rank
         i = 0
         while abs(diagonals[i]) > 1.e-10:
@@ -590,28 +601,38 @@ class Groebner(object):
         if rank == height: #full rank, do qr on it
             Q,R = qr(A)
             A = R #qr reduce A
-            B = np.dot(np.transpose(Q),B) #Transform B the same way
+            B = Q.T@B #Transform B the same way
         else: #not full rank
-            A = R[:,P] #Switch the columns back
-            B = np.dot(np.transpose(Q),B) #Multiply B by Q transpose
+            A = R[:,PT] #Switch the columns back
+            B = Q.T@B #Multiply B by Q transpose
             #sub1 is the top part of the matrix, we will recursively reduce this
             #sub2 is the bottom part of A, we will set this all to 0
             #sub3 is the bottom part of B, we will recursively reduce this.
             #All submatrices are then put back in the matrix and it is returned.
-            sub1 = np.hstack((A[:rank,],B[:rank,]))
-            result = self.rrqr_reduce(self.clean_zeros_from_matrix(sub1))
-            A[:rank,] = result[:,:height]
-            B[:rank,] = result[:,height:]
+            sub1 = np.hstack((A[:rank,],B[:rank,])) #Takes the top parts of A and B
+            result = self.rrqr_reduce(sub1) #Reduces it
+            A[:rank,] = result[:,:height] #Puts the A part back in A
+            B[:rank,] = result[:,height:] #And the B part back in B
             
             sub2 = A[rank:,]
             zeros = np.zeros_like(sub2)
             A[rank:,] = np.zeros_like(sub2)
             
             sub3 = B[rank:,]
-            B[rank:,] = self.rrqr_reduce(self.clean_zeros_from_matrix(sub3))
+            B[rank:,] = self.rrqr_reduce(sub3)
         
         reduced_matrix = np.hstack((A,B))
         
-        return self.clean_zeros_from_matrix(reduced_matrix) #returns the new reduced matrix
+        return reduced_matrix #returns the new reduced matrix
     
+    def inverse_P(self,p):
+        '''
+        Takes in the one dimentional array of column switching.
+        Returns the one dimentional array of switching it back. 
+        '''
+        # The elementry matrix that flips the columns of given matrix. 
+        P = np.eye(len(p))[:,p]
+        # This finds the index that equals 1 of each row of P. 
+        #(This is what we want since we want the index of 1 at each column of P.T)
+        return np.where(P==1)[1]
     
