@@ -4,4 +4,4 @@
 *.ipynb
 pytest/htmlcov
 pytest/.cache
-
+.cache/
