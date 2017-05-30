@@ -354,34 +354,12 @@ class Groebner(object):
             self.not_needed_lms.add(Term(b.lead_term))
         
         return a.mon_mult(a_diff), b.mon_mult(b_diff)
-<<<<<<< HEAD
-    
-    def add_phi_to_matrix(self):
-=======
 
-    
-    
     def add_phi_to_matrix(self,phi = True):
->>>>>>> fc0cde13d3bae649c54373759c2d9552889dc542
         '''
         Takes all new possible combinations of phi polynomials and adds them to the Groebner Matrix
         Includes some checks to throw out unnecessary phi's
         '''
-<<<<<<< HEAD
-        for i,j in itertools.combinations(self.new_polys+self.old_polys,2):
-            # This prevents calculation of phi with combinations of old_f exclusively. 
-            if i not in self.old_polys:
-                # Relative prime check: If the elementwise multiplication of list i and j are all zeros, calculation of phi is not needed. 
-                #(I separated the if statements for better visibility reasons, if it's better to combine, please fix!)
-                if not all([ a == 0 or b ==0 for a,b in zip(i.lead_term, j.lead_term)]): 
-                # Calculate the phi's.
-                    p_a , p_b = self.calc_phi(i,j)
-                    # Add the phi's on to the Groebner Matrix. 
-                    self._add_poly_to_matrix(p_a)
-                    self._add_poly_to_matrix(p_b)
-                                        
-=======
-
         
         # Find the set of all pairs of index the function will run through
         
@@ -402,13 +380,10 @@ class Groebner(object):
                 # add the phi's on to the Groebner Matrix. 
                 self._add_poly_to_matrix(p_a)
                 self._add_poly_to_matrix(p_b)
->>>>>>> fc0cde13d3bae649c54373759c2d9552889dc542
         self.clean_matrix()
         
         pass
     
-<<<<<<< HEAD
-=======
     def phi_criterion(self,i,j,B,phi):
         # Need to run tests 
         '''
@@ -416,15 +391,15 @@ class Groebner(object):
         i (int) : the index of the first polynomial 
         j (int) : the index of the second polynomial 
         B (set) : index of the set of polynomials to be considered. 
-    	
+        
         Returns: 
-    	   (bool) : returns False if 
+           (bool) : returns False if 
                 1) The polynomials at index i and j are relative primes or
                 2) there exists an l such that (i,l) or (j,l) will not be considered in
                 the add_phi_to_matrix() method and LT(l) divides lcm(LT(i),LT(j)), 
                 otherwise, returns True. 
-    	   * See proposition 8 in "Section 10: Improvements on Buchburger's algorithm."
-	   '''
+           * See proposition 8 in "Section 10: Improvements on Buchburger's algorithm."
+       '''
         if phi == False:
             return True
         # List of new and old polynomials. 
@@ -464,8 +439,6 @@ class Groebner(object):
         # Function will return True and calculate phi if none of the checks passed for all l's. 
         return True 
     
-
->>>>>>> fc0cde13d3bae649c54373759c2d9552889dc542
     def _build_maxheap(self):
         '''
         Builds a maxheap for use in r polynomial calculation
