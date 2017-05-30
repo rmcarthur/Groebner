@@ -49,7 +49,7 @@ class MultiPower(Polynomial):
         here we add leading terms?
         '''
         return MultiPower(fftconvolve(self.coeff, other.coeff))
-    
+
     def __eq__(self,other):
         '''
         check if coeff matrix is the same
@@ -58,7 +58,7 @@ class MultiPower(Polynomial):
             return False
         else:
             return np.allclose(self.coeff, other.coeff)
-    
+
     def __ne__(self,other):
         '''
         check if coeff matrix is not the same same
