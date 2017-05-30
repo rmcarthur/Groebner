@@ -135,7 +135,7 @@ class Groebner(object):
             pass
         return non_zeros
 
-    def reduce_poly(self, poly):
+    def reduce_poly(self, poly, divisors=[]):
         """
         Divides a polynomial by the polynomials we already have to see if it contains any new info
         """
@@ -403,7 +403,7 @@ class Groebner(object):
                     print("\t{} is i or j".format(l))
                     continue
 
-                # Sorts the tuple (i,l) or (l,i) in order of smaller to bigger. 
+                # Sorts the tuple (i,l) or (l,i) in order of smaller to bigger.
                 i_tuple = tuple(sorted((i,l)))
                 j_tuple = tuple(sorted((j,l)))
 
