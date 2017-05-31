@@ -71,7 +71,7 @@ class RootFinder(object):
         for mon in possibleMonomials:
             divisible = False
             for LT in LT_G:
-                if (self.divides(LT, mon)):
+                if (self._divides(LT, mon)):
                      divisible = True
                      break
             if (not divisible):
@@ -124,7 +124,7 @@ class RootFinder(object):
 
         return coordinateVector
 
-    def divides(self, mon1, mon2):
+    def _divides(self, mon1, mon2):
         '''
         parameters
         ----------
@@ -158,14 +158,14 @@ class RootFinder(object):
         change = True
         while change:
             change = False
-            for other in self.GB:
-                if poly.lead_term == None or other.lead_term == None:
-                    continue #one of them is empty
-                if other != poly and self.divides(other.lead_term, poly.lead_term):
-                    #print(poly.coeff)
-                    #print(other.coeff)
-                    monomial = tuple(np.subtract(poly.lead_term,other.lead_term))
-                    new = other.mon_mult(monomial)
+            for basis_poly in self.GB:
+                if basis_poly != poly and \
+                self._divides(basis_poly.lead_term, poly.lead_term):
+
+                    monomial = tuple(np.subtract(
+                        poly.lead_term,basis_poly.lead_term))
+
+                    new = basis_poly.mon_mult(monomial)
 
                     lcm = np.maximum(poly.coeff.shape, new.coeff.shape)
 
@@ -177,8 +177,8 @@ class RootFinder(object):
                     new_pad[np.where(new_pad<0)]=0
                     pad_new = self._pad_back(new_pad,new)
 
-                    new_coeff = pad_poly.coeff-(poly.lead_coeff/other.lead_coeff)*pad_new.coeff
-                    new_coeff[np.where(abs(new_coeff) < .1)]=0 #Get rid of floating point errors to make more stable
+                    new_coeff = pad_poly.coeff-(poly.lead_coeff/basis_poly.lead_coeff)*pad_new.coeff
+                    new_coeff[np.where(abs(new_coeff) < 1.e-10)]=0 #Get rid of floating point errors to make more stable
                     poly.__init__(new_coeff)
                     #print(poly.coeff)
                     change = True
