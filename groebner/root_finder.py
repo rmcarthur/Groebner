@@ -19,7 +19,7 @@ class RootFinder(object):
         polynomials in Groebner basis
     self.vectorBasis : list
         tuples representing monomials in the vector space basis
-    self.dimension : int
+    self.vectorSpaceDimension : int
         dimension of the vector space
 
     primary methods
@@ -103,12 +103,12 @@ class RootFinder(object):
         parameters
         ----------
         reducedPoly : polynomial object
-            the polynomial for which to find the coordinate vector of its coset
+            The polynomial for which to find the coordinate vector of its coset.
 
         return
         ------
         coordinateVector : list
-            the coordinate vector of the given polynomial's coset in
+            The coordinate vector of the given polynomial's coset in
             A = C[x_1,...x_n]/I as a vector space over C
         '''
         # reverse the array since self.vectorBasis is in increasing order
