@@ -80,6 +80,11 @@ class RootFinder(object):
         return basis
 
     def multOperatorMatrix(self, poly):
+        '''
+        Finds the matrix of the linear operator m_f on C[x_1,...,x_n]/I
+        where f is the polynomial argument. The eigenvalues of the resulting
+        matrix are the values of f on V(I).
+        '''
         dim = self.vectorSpaceDimension
         multOperatorMatrix = np.zeros((dim, dim))
 
