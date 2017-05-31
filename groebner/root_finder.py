@@ -133,6 +133,43 @@ class RootFinder(object):
         '''
         return all(np.subtract(mon2, mon1) >= 0)
 
+    def reduce_poly(self, poly):
+        """
+        Divides a polynomial by the Groebner basis using the standard
+        multivariate division algorithm and returns the remainder
+        """
+        change = True
+        while change:
+            change = False
+            for other in self.old_polys:
+                if poly.lead_term == None or other.lead_term == None:
+                    continue #one of them is empty
+                if other != poly and all([i-j >= 0 for i,j in zip(poly.lead_term,other.lead_term)]):
+                    #print(poly.coeff)
+                    #print(other.coeff)
+                    monomial = tuple(np.subtract(poly.lead_term,other.lead_term))
+                    new = other.mon_mult(monomial)
+
+                    lcm = np.maximum(poly.coeff.shape, new.coeff.shape)
+
+                    poly_pad = np.subtract(lcm, poly.coeff.shape)
+                    poly_pad[np.where(poly_pad<0)]=0
+                    pad_poly = self.pad_back(poly_pad, poly)
+
+                    new_pad = np.subtract(lcm, new.coeff.shape)
+                    new_pad[np.where(new_pad<0)]=0
+                    pad_new = self.pad_back(new_pad,new)
+
+                    new_coeff = pad_poly.coeff-(poly.lead_coeff/other.lead_coeff)*pad_new.coeff
+                    new_coeff[np.where(abs(new_coeff) < 1.e-10)]=0 #Get rid of floating point errors to make more stable
+                    poly.__init__(new_coeff)
+                    #print(poly.coeff)
+                    change = True
+                    pass
+                pass
+            pass
+        return poly
+
     def getRemainder(self, poly):
         '''
         parameters
