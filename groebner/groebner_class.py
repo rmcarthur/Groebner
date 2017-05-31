@@ -9,6 +9,7 @@ from multi_power import MultiPower
 from scipy.linalg import lu
 from scipy.linalg import qr
 from maxheap import Term
+import matplotlib.pyplot as plt
 
 class Groebner(object):
 
@@ -261,13 +262,14 @@ class Groebner(object):
             coeff = np.zeros(shape)
             for j,term in enumerate(matrix_term_vals):
                 coeff[term] = p[j]
-                        
+            
             if self.power:
                 poly = MultiPower(coeff)
+                p_list.append(poly)
             else:
                 poly = MultiCheb(coeff)
-            
-            p_list.append(poly)
+                p_list.append(poly)
+            pass
         return p_list
 
     def _add_poly_to_matrix(self, p, adding_r = False):
@@ -513,6 +515,7 @@ class Groebner(object):
             ##the recursion
             ##full_rank = self.np_matrix
             reduced_matrix = self.rrqr_reduce(full_rank)
+            plt.matshow(~np.isclose(reduced_matrix,0))
         else:
             P,L,U = lu(self.np_matrix)
             reduced_matrix = U

@@ -36,7 +36,7 @@ class Polynomial(object):
             while not change:
                 temp = np.delete(self.coeff,-1,axis=axis)
                 sum_temp = np.sum(abs(temp))
-                if sum_temp == sum_values:
+                if abs(sum_temp - sum_values) < 1.e-10:
                     self.coeff = temp
                 else:
                     change = True
