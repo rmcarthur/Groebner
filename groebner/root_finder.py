@@ -86,8 +86,9 @@ class RootFinder(object):
         for i in range(dim):
             monomial = self.vectorBasis[i]
             poly_ = poly.mon_mult(monomial)
-            poly_ = self.getRemainder(poly_)
+            poly_ = self.reduce_poly(poly_)
 
+            print("poly_:\n", poly_.coeff)
             multOperatorMatrix[:,i] = self.coordinateVector(poly_)
 
         return multOperatorMatrix
@@ -108,6 +109,7 @@ class RootFinder(object):
         # reverse the array since self.vectorBasis is in increasing order
         # and monomialList() gives a list in decreasing order
         reducedPolyTerms = reducedPoly.monomialList()[::-1]
+        print("terms: ", reducedPolyTerms)
         assert(len(reducedPolyTerms) <= self.vectorSpaceDimension)
 
         coordinateVector = [0] * self.vectorSpaceDimension
@@ -134,44 +136,10 @@ class RootFinder(object):
         return all(np.subtract(mon2, mon1) >= 0)
 
     def reduce_poly(self, poly):
-        """
+        '''
         Divides a polynomial by the Groebner basis using the standard
         multivariate division algorithm and returns the remainder
-        """
-        change = True
-        while change:
-            change = False
-            for other in self.old_polys:
-                if poly.lead_term == None or other.lead_term == None:
-                    continue #one of them is empty
-                if other != poly and all([i-j >= 0 for i,j in zip(poly.lead_term,other.lead_term)]):
-                    #print(poly.coeff)
-                    #print(other.coeff)
-                    monomial = tuple(np.subtract(poly.lead_term,other.lead_term))
-                    new = other.mon_mult(monomial)
 
-                    lcm = np.maximum(poly.coeff.shape, new.coeff.shape)
-
-                    poly_pad = np.subtract(lcm, poly.coeff.shape)
-                    poly_pad[np.where(poly_pad<0)]=0
-                    pad_poly = self.pad_back(poly_pad, poly)
-
-                    new_pad = np.subtract(lcm, new.coeff.shape)
-                    new_pad[np.where(new_pad<0)]=0
-                    pad_new = self.pad_back(new_pad,new)
-
-                    new_coeff = pad_poly.coeff-(poly.lead_coeff/other.lead_coeff)*pad_new.coeff
-                    new_coeff[np.where(abs(new_coeff) < 1.e-10)]=0 #Get rid of floating point errors to make more stable
-                    poly.__init__(new_coeff)
-                    #print(poly.coeff)
-                    change = True
-                    pass
-                pass
-            pass
-        return poly
-
-    def getRemainder(self, poly):
-        '''
         parameters
         ----------
         polynomial : polynomial object, either power or chebychev
@@ -182,4 +150,46 @@ class RootFinder(object):
         polynomial object
             the unique remainder of poly divided by self.GB
         '''
-        return self.Groebner.reduce_poly(poly, self.GB)
+        change = True
+        while change:
+            change = False
+            for other in self.GB:
+                if poly.lead_term == None or other.lead_term == None:
+                    continue #one of them is empty
+                if other != poly and self.divides(other.lead_term, poly.lead_term):
+                    #print(poly.coeff)
+                    #print(other.coeff)
+                    monomial = tuple(np.subtract(poly.lead_term,other.lead_term))
+                    new = other.mon_mult(monomial)
+
+                    lcm = np.maximum(poly.coeff.shape, new.coeff.shape)
+
+                    poly_pad = np.subtract(lcm, poly.coeff.shape)
+                    poly_pad[np.where(poly_pad<0)]=0
+                    pad_poly = self._pad_back(poly_pad, poly)
+
+                    new_pad = np.subtract(lcm, new.coeff.shape)
+                    new_pad[np.where(new_pad<0)]=0
+                    pad_new = self._pad_back(new_pad,new)
+
+                    new_coeff = pad_poly.coeff-(poly.lead_coeff/other.lead_coeff)*pad_new.coeff
+                    new_coeff[np.where(abs(new_coeff) < .1)]=0 #Get rid of floating point errors to make more stable
+                    poly.__init__(new_coeff)
+                    #print(poly.coeff)
+                    change = True
+                    pass
+                pass
+            pass
+        return poly
+
+    def _pad_back(self,mon,poly):
+        tuple1 = []
+        for i in mon:
+            list1 = (0,i)
+            tuple1.append(list1)
+        if type(poly) == MultiPower:
+            return MultiPower(np.pad(poly.coeff, tuple1, 'constant', \
+            constant_values = 0), clean_zeros = False)
+        elif type(poly) == MultiCheb:
+            return MultiCheb(np.pad(poly.coeff, tuple1, 'constant', \
+            constant_values = 0), clean_zeros = False)

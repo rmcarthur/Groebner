@@ -177,8 +177,5 @@ class Polynomial(object):
         if not found:
             self.lead_term = None
             self.lead_coeff = 0
-        else:
-            self.coeff = self.coeff/self.lead_coeff
-            self.lead_coeff = 1.
 
         #print('Leading Coeff is {}'.format(self.lead_term))
