@@ -71,8 +71,7 @@ def test_solve():
     X = MultiPower(np.array([[-2.],[ 1.]]))
     Y = MultiPower(np.array([[-3.,1.]]))
     x1, y1 = grob.solve()
-    #This is broken right now becasue it isn't getting the reduced groebner basis right.
-    #assert(np.any([X==i and Y==j for i,j in permutations((x1,y1),2)]))
+    assert(np.any([X==i and Y==j for i,j in permutations((x1,y1),2)]))
 
     #Second Test
     A = MultiPower(np.array([
