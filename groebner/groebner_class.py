@@ -365,36 +365,38 @@ class Groebner(object):
         
         return a.mon_mult(a_diff), b.mon_mult(b_diff)
 
+
     def add_phi_to_matrix(self,phi = True):
         '''
         Takes all new possible combinations of phi polynomials and adds them to the Groebner Matrix
         Includes some checks to throw out unnecessary phi's
         '''
-        
+
         # Find the set of all pairs of index the function will run through
-        
-        # Index_new iterate the tuple of every combination of the new_polys. 
+
+        # Index_new iterate the tuple of every combination of the new_polys.
         index_new = itertools.combinations(range(len(self.new_polys)),2)
-        # Index_oldnew iterates the tuple of every combination of new and old polynomials 
-        index_oldnew = itertools.product(range(len(self.new_polys)),range(len(self.new_polys), 
+        # Index_oldnew iterates the tuple of every combination of new and old polynomials
+        index_oldnew = itertools.product(range(len(self.new_polys)),range(len(self.new_polys),
                                                len(self.old_polys)+len(self.new_polys)))
         B = set(itertools.chain(index_new,index_oldnew))
-        
-        # Iterating through both possible combinations. 
+
+        # Iterating through both possible combinations.
         while B:
             i,j = B.pop()
             if self.phi_criterion(i,j,B,phi)== True:
                 #calculate the phi's.
                 poly = self.new_polys + self.old_polys
                 p_a , p_b = self.calc_phi(poly[i],poly[j])
-                # add the phi's on to the Groebner Matrix. 
+                # add the phi's on to the Groebner Matrix.
                 self._add_poly_to_matrix(p_a)
                 self._add_poly_to_matrix(p_b)
         self.clean_matrix()
-        
+
         pass
-    
+
     def phi_criterion(self,i,j,B,phi):
+
         # Need to run tests 
         '''
         Parameters: 
@@ -410,14 +412,16 @@ class Groebner(object):
                 otherwise, returns True. 
            * See proposition 8 in "Section 10: Improvements on Buchburger's algorithm."
        '''
+
         if phi == False:
             return True
-        # List of new and old polynomials. 
+        # List of new and old polynomials.
         polys = self.new_polys+self.old_polys
-        
+
         # Relative Prime check: If the lead terms of i and j are relative primes, phi is not needed
         if all([a*b == 0 for a,b in zip(polys[i].lead_term,polys[j].lead_term)]):
             return False
+
         
         else: 
         # Another criterion
@@ -430,19 +434,21 @@ class Groebner(object):
                     continue 
                 
                 # Sorts the tuple (i,l) or (l,i) in order of smaller to bigger. 
+
                 i_tuple = tuple(sorted((i,l)))
                 j_tuple = tuple(sorted((j,l)))
-                
-                # i_tuple and j_tuple needs to not be in B. 
+
+                # i_tuple and j_tuple needs to not be in B.
                 if j_tuple in B or i_tuple in B:
                     #print('\t{} or {} is in B'.format(j_tuple,i_tuple))
                     continue
-                
+
                 lcm = self._lcm(polys[i],polys[j])
                 lead_l = polys[l].lead_term
-                        
-                # See if LT(poly[l]) divides lcm(LT(i),LT(j)) 
+
+                # See if LT(poly[l]) divides lcm(LT(i),LT(j))
                 if all([i-j>=0 for i,j in zip(lcm,lead_l)]) :
+
                     #print("\tLT of poly[l] divides lcm(LT(i),LT(j)")
                     return False 
                 
@@ -582,6 +588,7 @@ class Groebner(object):
         matrix[np.where(abs(matrix) < 1.e-10)]=0
         return matrix
         pass
+
     
     def rrqr_reduce(self, matrix):
         if matrix.shape[0]==0 or matrix.shape[1]==0:
