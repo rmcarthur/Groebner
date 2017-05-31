@@ -6,8 +6,7 @@ import os,sys
 import math
 from multi_cheb import MultiCheb
 from multi_power import MultiPower
-from scipy.linalg import lu
-from scipy.linalg import qr
+from scipy.linalg import lu, qr, solve_triangular
 from maxheap import Term
 import matplotlib.pyplot as plt
 
@@ -148,6 +147,7 @@ class Groebner(object):
 
     def reduce_poly(self, poly):
         """
+        WE NO LONGER USE THIS EITHER
         Divides a polynomial by the polynomials we already have to see if it contains any new info
         """
         change = True
@@ -187,8 +187,8 @@ class Groebner(object):
         Turns the groebner basis into a reduced groebner basis
         '''
         groebner_basis = list()
-        #Checks if the polynomial 1 is in the basis. If so, this is the basis. This reuction won't happen earlier
-        #becasue of the phi criterion check
+        #Checks if the polynomial 1 is in the basis. If so, this is the basis. This reduction won't happen earlier
+        #becasue of the phi criterion check. Maybe.
         hasOne = False
         for poly in self.old_polys:
             if poly.coeff.shape==(1,1):
@@ -367,38 +367,36 @@ class Groebner(object):
         
         return a.mon_mult(a_diff), b.mon_mult(b_diff)
 
-
     def add_phi_to_matrix(self,phi = True):
         '''
         Takes all new possible combinations of phi polynomials and adds them to the Groebner Matrix
         Includes some checks to throw out unnecessary phi's
         '''
-
+        
         # Find the set of all pairs of index the function will run through
-
-        # Index_new iterate the tuple of every combination of the new_polys.
+        
+        # Index_new iterate the tuple of every combination of the new_polys. 
         index_new = itertools.combinations(range(len(self.new_polys)),2)
-        # Index_oldnew iterates the tuple of every combination of new and old polynomials
-        index_oldnew = itertools.product(range(len(self.new_polys)),range(len(self.new_polys),
+        # Index_oldnew iterates the tuple of every combination of new and old polynomials 
+        index_oldnew = itertools.product(range(len(self.new_polys)),range(len(self.new_polys), 
                                                len(self.old_polys)+len(self.new_polys)))
         B = set(itertools.chain(index_new,index_oldnew))
-
-        # Iterating through both possible combinations.
+        
+        # Iterating through both possible combinations. 
         while B:
             i,j = B.pop()
             if self.phi_criterion(i,j,B,phi)== True:
                 #calculate the phi's.
                 poly = self.new_polys + self.old_polys
                 p_a , p_b = self.calc_phi(poly[i],poly[j])
-                # add the phi's on to the Groebner Matrix.
+                # add the phi's on to the Groebner Matrix. 
                 self._add_poly_to_matrix(p_a)
                 self._add_poly_to_matrix(p_b)
         self.clean_matrix()
-
+        
         pass
-
+    
     def phi_criterion(self,i,j,B,phi):
-
         # Need to run tests 
         '''
         Parameters: 
@@ -414,16 +412,14 @@ class Groebner(object):
                 otherwise, returns True. 
            * See proposition 8 in "Section 10: Improvements on Buchburger's algorithm."
        '''
-
         if phi == False:
             return True
-        # List of new and old polynomials.
+        # List of new and old polynomials. 
         polys = self.new_polys+self.old_polys
-
+        
         # Relative Prime check: If the lead terms of i and j are relative primes, phi is not needed
         if all([a*b == 0 for a,b in zip(polys[i].lead_term,polys[j].lead_term)]):
             return False
-
         
         else: 
         # Another criterion
@@ -436,21 +432,19 @@ class Groebner(object):
                     continue 
                 
                 # Sorts the tuple (i,l) or (l,i) in order of smaller to bigger. 
-
                 i_tuple = tuple(sorted((i,l)))
                 j_tuple = tuple(sorted((j,l)))
-
-                # i_tuple and j_tuple needs to not be in B.
+                
+                # i_tuple and j_tuple needs to not be in B. 
                 if j_tuple in B or i_tuple in B:
                     #print('\t{} or {} is in B'.format(j_tuple,i_tuple))
                     continue
-
+                
                 lcm = self._lcm(polys[i],polys[j])
                 lead_l = polys[l].lead_term
-
-                # See if LT(poly[l]) divides lcm(LT(i),LT(j))
+                        
+                # See if LT(poly[l]) divides lcm(LT(i),LT(j)) 
                 if all([i-j>=0 for i,j in zip(lcm,lead_l)]) :
-
                     #print("\tLT of poly[l] divides lcm(LT(i),LT(j)")
                     return False 
                 
@@ -521,17 +515,35 @@ class Groebner(object):
             ##the recursion
             ##full_rank = self.np_matrix
             reduced_matrix = self.rrqr_reduce(full_rank)
-            plt.matshow(~np.isclose(reduced_matrix,0))
+            reduced_matrix = self.triangular_solve(reduced_matrix)
+            plt.matshow([i==0 for i in reduced_matrix])
         else:
             P,L,U = lu(self.np_matrix)
             reduced_matrix = U
             reduced_matrix = self.fully_reduce(reduced_matrix, qr_reduction = False)
-                
+        
+        #Checks the case where triangular solve returns a 1 matrix.
+        if reduced_matrix.shape == (1,1):
+            #Makes a n-d matrix that is a 1.
+            self.new_polys = list()
+            self.old_polys = list()
+            myTuple = min(self.original_lms).val
+            myTuple = myTuple+np.ones_like(myTuple)
+            coeff = np.zeros(myTuple)
+            spot = tuple(np.zeros_like(myTuple))
+            coeff[spot]=1
+            if self.power:
+                self.old_polys.append(MultiPower(coeff))
+            else:
+                self.old_polys.append(MultiCheb(coeff))
+            return False
+
         #Get the new polynomials
         new_poly_spots = list()
         old_poly_spots = list()
+
         already_looked_at = set() #rows whose leading monomial we've already checked
-        for i, j in zip(*np.where(reduced_matrix!=0)):
+        for i, j in zip(*np.where(reduced_matrix==1)):
             if i in already_looked_at: #We've already looked at this row
                 continue
             elif self.matrix_terms[j] in self.lead_term_set: #The leading monomial is not new.
@@ -543,9 +555,10 @@ class Groebner(object):
                 already_looked_at.add(i)
                 new_poly_spots.append(i) #This row gives a new leading monomial
             pass
-
+                
         self.old_polys = self.sm_to_poly(old_poly_spots, reduced_matrix)
         self.new_polys = self.sm_to_poly(new_poly_spots, reduced_matrix)
+        
         
         return len(self.new_polys) > 0
     
@@ -591,7 +604,6 @@ class Groebner(object):
         matrix[np.where(abs(matrix) < 1.e-10)]=0
         return matrix
         pass
-
     
     def rrqr_reduce(self, matrix):
         if matrix.shape[0]==0 or matrix.shape[1]==0:
@@ -646,3 +658,61 @@ class Groebner(object):
         #(This is what we want since we want the index of 1 at each column of P.T)
         return np.where(P==1)[1]
     
+    def triangular_solve(self,matrix):
+        " Reduces the upper block triangular matrix. "
+        m,n = matrix.shape
+        j = 0  # The row index. 
+        k = 0  # The column index. 
+        c = [] # It will contain the columns that make an upper triangular matrix. 
+        d = [] # It will contain the rest of the columns. 
+        order_c = [] # List to keep track of original index of the columns in c. 
+        order_d = [] # List to keep track of the original index of the columns in d. 
+        
+        # Checks if the given matrix is not a square matrix. 
+        if m != n:
+            # Makes sure the indicies are within the matrix. 
+            while j < m and k < n:
+                if matrix[j,k]!= 0:
+                    c.append(matrix[:,k])
+                    order_c.append(k)
+                    # Move to the diagonal if the index is non-zero. 
+                    j+=1
+                    k+=1
+                else:
+                    d.append(matrix[:,k])
+                    order_d.append(k)
+                    # Check the next column in the same row if index is zero. 
+                    k+=1 
+            # C will be the square matrix that is upper triangular with no zeros on the diagonals. 
+            C = np.vstack(c).T
+            # If d is not empty, add the rest of the columns not checked into the matrix. 
+            if d:
+                D = np.vstack(d).T 
+                D = np.hstack((D,matrix[:,k:]))
+            else:
+                D = matrix[:,k:]
+            # Append the index of the rest of the columns to the order_d list. 
+            for i in range(n-k):
+                order_d.append(k)
+                k+=1  
+            
+            # Solve for the CX = D 
+            X = solve_triangular(C,D)
+            
+            # Add I to X. [I|X] 
+            solver = np.hstack((np.eye(X.shape[0]),X))
+            
+            # Find the order to reverse the columns back. 
+            order = self.inverse_P(order_c+order_d)
+            
+            # Reverse the columns back. 
+            solver = solver[:,order]
+            # Temporary checker. Plots the non-zero part of the matrix. 
+            #plt.matshow(~np.isclose(solver,0))
+            
+            return solver
+        
+        else:
+        # The case where the matrix passed in is a square matrix
+            
+            return np.array([[1.]])
