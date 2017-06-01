@@ -36,7 +36,7 @@ class Polynomial(object):
             while not change:
                 temp = np.delete(self.coeff,-1,axis=axis)
                 sum_temp = np.sum(abs(temp))
-                if sum_temp == sum_values:
+                if abs(sum_temp - sum_values) < 1.e-10:
                     self.coeff = temp
                 else:
                     change = True
@@ -177,8 +177,5 @@ class Polynomial(object):
         if not found:
             self.lead_term = None
             self.lead_coeff = 0
-        else:
-            self.coeff = self.coeff/self.lead_coeff
-            self.lead_coeff = 1.
 
         #print('Leading Coeff is {}'.format(self.lead_term))
