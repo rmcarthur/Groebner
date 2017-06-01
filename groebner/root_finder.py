@@ -42,11 +42,13 @@ class RootFinder(object):
             a list of polynomials that make up a Groebner basis
         '''
         if type(G) is list:
-            self.Groebner = Groebner(G)
+            self.groebner = Groebner(G)
             self.GB = G
-        else:
-            self.Groebner = G
+        elif type(G) is Groebner:
+            self.groebner = G
             self.GB = G.solve()
+        else:
+            raise ValueError("Bad argument to RootFinder constructor.")
 
         self.vectorBasis = self.makeVectorBasis(self.GB)
         self.vectorSpaceDimension = len(self.vectorBasis)
@@ -81,9 +83,22 @@ class RootFinder(object):
 
     def multOperatorMatrix(self, poly):
         '''
-        Finds the matrix of the linear operator m_f on C[x_1,...,x_n]/I
-        where f is the polynomial argument. The eigenvalues of the resulting
-        matrix are the values of f on V(I).
+        Finds the matrix of the linear operator m_f on A = C[x_1,...,x_n]/I
+        where f is the polynomial argument. The linear operator m_f is defined
+        as m_f([g]) = [f]*[g] where [f] represents the coset of f in
+        A. Since m_f is a linear operator on A, it can be represented by its
+        matrix with respect to the vector space basis. That is the matrix
+        this function computes.
+
+        parameters
+        ----------
+        poly : polynomial object
+            The polynomial f for which to find the matrix m_f
+
+        return
+        ------
+        multOperatorMatrix : square numpy matrix
+            The matrix m_f
         '''
         dim = self.vectorSpaceDimension
         multOperatorMatrix = np.zeros((dim, dim))
@@ -93,7 +108,6 @@ class RootFinder(object):
             poly_ = poly.mon_mult(monomial)
             poly_ = self.reduce_poly(poly_)
 
-            print("poly_:\n", poly_.coeff)
             multOperatorMatrix[:,i] = self.coordinateVector(poly_)
 
         return multOperatorMatrix
@@ -114,7 +128,6 @@ class RootFinder(object):
         # reverse the array since self.vectorBasis is in increasing order
         # and monomialList() gives a list in decreasing order
         reducedPolyTerms = reducedPoly.monomialList()[::-1]
-        print("terms: ", reducedPolyTerms)
         assert(len(reducedPolyTerms) <= self.vectorSpaceDimension)
 
         coordinateVector = [0] * self.vectorSpaceDimension

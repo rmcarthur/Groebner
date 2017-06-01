@@ -4,6 +4,7 @@ sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:
 from root_finder import RootFinder
 from multi_power import MultiPower
 from multi_cheb import MultiCheb
+from groebner_class import Groebner
 import pytest
 import pdb
 
@@ -51,9 +52,29 @@ def test_makeBasis():
     assert (len(basis) == len(trueBasis)) and (m in basis for m in trueBasis), \
             "Failed on MultiPower in 3 vars."
 
-def testCoordinateVector():
-    f1 = MultiCheb(np.array([[0,-1.5,.5],[-1.5,1.5,0],[1,0,0]]))
-    f2 = MultiCheb(np.array([[0,0,0],[-1,0,1],[0,0,0]]))
-    f3 = MultiCheb(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]))
-    G = [f1, f2, f3]
-    rf = RootFinder(G)
+def testMatrixOperator():
+    f1 = MultiPower(np.array([[[5,0,0],[0,0,0],[0,0,0]],
+                          [[0,-2,0],[0,0,0],[0,0,0]],
+                          [[1,0,0],[0,0,0],[0,0,0]]]))
+
+    f2 = MultiPower(np.array([[[1,0,0],[0,1,0],[0,0,0]],
+                          [[0,0,0],[0,0,0],[1,0,0]],
+                          [[0,0,0],[0,0,0],[0,0,0]]]))
+
+    f3 = MultiPower(np.array([[[0,0,0],[0,0,0],[3,0,0]],
+                          [[0,-8,0],[0,0,0],[0,0,0]],
+                          [[0,0,0],[0,0,0],[0,0,0]]]))
+
+    F = [f1, f2, f3]
+    Gr = Groebner(F)
+    rf = RootFinder(Gr)
+
+    x = MultiPower(np.array([[0,0,0],[1,0,0],[0,0,0]]), clean_zeros=False)
+    # Need to reshape to work with 3 vars
+    x = MultiPower(x.coeff.reshape(3,3,1))
+
+    mx_RealEig = [eig.real for eig in \
+        np.linalg.eigvals(rf.multOperatorMatrix(x)) if (eig.imag == 0)]
+
+    assert(len(mx_RealEig) == 2)
+    assert(np.allclose(mx_RealEig, [-1.100987715, .9657124563], atol=1.e-8))
