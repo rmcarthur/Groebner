@@ -216,7 +216,6 @@ class RootFinder(object):
                     new_coeff = pad_poly.coeff-(poly.lead_coeff/basis_poly.lead_coeff)*pad_new.coeff
                     new_coeff[np.where(abs(new_coeff) < 1.e-10)]=0 #Get rid of floating point errors to make more stable
                     poly.__init__(new_coeff)
-                    #print(poly.coeff)
                     change = True
                     pass
                 pass
