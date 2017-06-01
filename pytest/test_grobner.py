@@ -12,6 +12,7 @@ import maxheap
 from multi_power import MultiPower
 from groebner_class import Groebner
 import pytest
+from scipy.linalg import qr
 
 #write more tests
 
@@ -205,4 +206,63 @@ def test_phi_criterion():
     # Currently, the test fails when phi criterion is not used. Will need to figure out solution! 
     #assert(len(basis1)==len(basis2)) 
     
+def test_inverse_P():
+    
+    # Simple Test Case. 
+    C = MultiPower(np.array([[-1,0,1],[0,0,0]]))
+    D = MultiPower(np.array([[-1,0,0],[0,1,0],[1,0,0]]))
+    # Creating a random object to run tests. 
+    grob = Groebner([C,D])
+    
+    # Create matrix 
+    M = np.array([[0, 1, 2, 3, 4, 5],
+       [0, 1, 2, 3, 4, 5],
+       [0, 1, 2, 3, 4, 5],
+       [0, 1, 2, 3, 4, 5]])
+    
+    # Order of Column flips. 
+    p = [1,4,3,2,0,5]
+    
+    # N is the matrix with the columns flipped. 
+    N = M[:,p]
+    
+    # Find the order of columns to flip back to. 
+    pt = grob.inverse_P(p)
+    # Result done by hand. 
+    pt_inv = [4,0,3,2,1,5]
+    assert(np.allclose(M,N[:,pt])), "Matrix are not the same."
+    assert(all(pt == pt_inv)), "Wrong matrix order."
+    
+    
+    # Test Case 2: 
+    A = np.random.random((5,10))
+    
+    Q,R,p = qr(A,pivoting=True)
+    
+    pt = grob.inverse_P(p)
+    
+    # We know that A[:,p] = QR, want to see if pt flips QR back to A. 
+    assert(np.allclose(A,np.dot(Q,R)[:,pt]))
 
+def test_triangular_solve():
+    # Simple Test Case. 
+    M = MultiPower(np.array([[-1,0,1],[0,0,0]]))
+    N = MultiPower(np.array([[-1,0,0],[0,1,0],[1,0,0]]))
+    # Creating a random object to run tests. 
+    grob = Groebner([M,N])
+    
+    A = np.array([[1, 2, 3, 4, 5],
+                  [0, 1, 2, 3, 4],
+                  [0, 0, 0, 1, 2]])
+
+    matrix = grob.triangular_solve(A)
+    answer = np.array([[ 1.,  0., -1.,  0.,  1.],
+                       [ 0.,  1.,  2.,  0., -2.],
+                       [ 0.,  0.,  0.,  1.,  2.]])
+    assert(np.allclose(matrix,answer))
+    
+    
+    
+    
+    
+    

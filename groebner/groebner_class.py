@@ -8,7 +8,9 @@ from multi_cheb import MultiCheb
 from multi_power import MultiPower
 from scipy.linalg import lu
 from scipy.linalg import qr
+from scipy.linalg import solve_triangular
 from maxheap import Term
+import matplotlib.pyplot as plt
 
 class Groebner(object):
 
@@ -86,8 +88,8 @@ class Groebner(object):
             i+=1
             pass
         print("WE WIN")
-        #for p in self.old_polys:
-        #    print(p.coeff)
+        for p in self.old_polys:
+            print(p.coeff)
         print("Reduced - ")
         return self.reduce_groebner_basis()
         pass
@@ -513,6 +515,7 @@ class Groebner(object):
             ##the recursion
             ##full_rank = self.np_matrix
             reduced_matrix = self.rrqr_reduce(full_rank)
+            reduced_matrix = self.triangular_solve(reduced_matrix)
         else:
             P,L,U = lu(self.np_matrix)
             reduced_matrix = U
@@ -636,3 +639,4 @@ class Groebner(object):
         #(This is what we want since we want the index of 1 at each column of P.T)
         return np.where(P==1)[1]
     
+
