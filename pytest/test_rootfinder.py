@@ -8,7 +8,7 @@ from groebner_class import Groebner
 import pytest
 import pdb
 
-def test_makeBasis():
+def test_makeVectorBasis():
     f1 = MultiPower(np.array([[0,-1.5,.5],[-1.5,1.5,0],[1,0,0]]))
     f2 = MultiPower(np.array([[0,0,0],[-1,0,1],[0,0,0]]))
     f3 = MultiPower(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]))
@@ -20,6 +20,7 @@ def test_makeBasis():
     assert (len(basis) == len(trueBasis)) and (m in basis for m in trueBasis), \
             "Failed on MultiPower in 2 vars."
 
+def test_makeVectorBasis_2():
     f1 = MultiPower(np.array([[[0,0,1],[0,3/20,0],[0,0,0]],
                               [[0,0,0],[-3/40,1,0],[0,0,0]],
                               [[0,0,0],[0,0,0],[0,0,0]]]))
@@ -46,13 +47,14 @@ def test_makeBasis():
                               [[0,0,0],[0,0,0],[0,0,0]]]))
 
     G = [f1, f2, f3, f4, f5, f6]
+    rf = RootFinder(G)
     basis = rf.makeVectorBasis(G)
     trueBasis = [(0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,0,1),(0,0,2),(1,0,1),(0,1,1)]
 
     assert (len(basis) == len(trueBasis)) and (m in basis for m in trueBasis), \
             "Failed on MultiPower in 3 vars."
 
-def testMatrixOperator():
+def testOperatorMatrix():
     f1 = MultiPower(np.array([[[5,0,0],[0,0,0],[0,0,0]],
                           [[0,-2,0],[0,0,0],[0,0,0]],
                           [[1,0,0],[0,0,0],[0,0,0]]]))
@@ -69,12 +71,28 @@ def testMatrixOperator():
     Gr = Groebner(F)
     rf = RootFinder(Gr)
 
-    x = MultiPower(np.array([[0,0,0],[1,0,0],[0,0,0]]), clean_zeros=False)
-    # Need to reshape to work with 3 vars
-    x = MultiPower(x.coeff.reshape(3,3,1))
+    x = MultiPower(np.array([[0],[1]]))
 
     mx_RealEig = [eig.real for eig in \
-        np.linalg.eigvals(rf.multOperatorMatrix(x)) if (eig.imag == 0)]
+        np.linalg.eigvals(rf.operatorMatrix(x)) if (eig.imag == 0)]
 
     assert(len(mx_RealEig) == 2)
     assert(np.allclose(mx_RealEig, [-1.100987715, .9657124563], atol=1.e-8))
+
+def testOperatorMatrix_2():
+    f1 = MultiPower(np.array([[0,-1.5,.5],[-1.5,1.5,0],[1,0,0]]))
+    f2 = MultiPower(np.array([[0,0,0],[-1,0,1],[0,0,0]]))
+    f3 = MultiPower(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]))
+    G = [f1, f2, f3]
+    rf = RootFinder(G)
+
+    x = MultiPower(np.array([[0],[1]]))
+    y = MultiPower(np.array([[0,1]]))
+
+    mx_Eig = np.linalg.eigvals(rf.operatorMatrix(x))
+    my_Eig = np.linalg.eigvals(rf.operatorMatrix(y))
+
+    assert(len(mx_Eig) == 5)
+    assert(len(my_Eig) == 5)
+    assert(np.allclose(mx_Eig, [-1., 2., 1., 1., 0.]))
+    assert(np.allclose(my_Eig, [1., -1., 1., -1., 0.]))
