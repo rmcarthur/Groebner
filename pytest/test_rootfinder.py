@@ -4,10 +4,11 @@ sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:
 from root_finder import RootFinder
 from multi_power import MultiPower
 from multi_cheb import MultiCheb
+from groebner_class import Groebner
 import pytest
 import pdb
 
-def test_makeBasis():
+def test_makeVectorBasis():
     f1 = MultiPower(np.array([[0,-1.5,.5],[-1.5,1.5,0],[1,0,0]]))
     f2 = MultiPower(np.array([[0,0,0],[-1,0,1],[0,0,0]]))
     f3 = MultiPower(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]))
@@ -19,31 +20,79 @@ def test_makeBasis():
     assert (len(basis) == len(trueBasis)) and (m in basis for m in trueBasis), \
             "Failed on MultiPower in 2 vars."
 
-    f1_coeff = np.array([[[0,0,1],[0,3/20,0],[0,0,0]],[[0,0,0],[-3/40,1,0],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0]]])
-    f2_coeff = np.array([[[3/16,-5/2,0],[0,3/16,0],[0,0,0]],[[0,0,1],[0,0,0],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0]]])
-    f3_coeff = np.array([[[0,1,1/2],[0,3/40,1],[0,0,0]],[[-1/2,20/3,0],[-3/80,0,0],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0]]])
-    f4_coeff = np.array([[[3/32,-7/5,0,1],[-3/16,83/32,0,0],[0,0,0,0],[0,0,0,0]],[[3/40,-1,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]], \
-                        [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]])
-    f5_coeff = np.array([[[5,0,0],[0,0,0],[0,0,0]],[[0,-2,0],[0,0,0],[0,0,0]],[[1,0,0],[0,0,0],[0,0,0]]])
-    f6_coeff = np.array([[[0,0,0],[0,0,0],[1,0,0]],[[0,-8/3,0],[0,0,0],[0,0,0]],[[0,0,0],[0,0,0],[0,0,0]]])
+def test_makeVectorBasis_2():
+    f1 = MultiPower(np.array([[[0,0,1],[0,3/20,0],[0,0,0]],
+                              [[0,0,0],[-3/40,1,0],[0,0,0]],
+                              [[0,0,0],[0,0,0],[0,0,0]]]))
 
-    f1 = MultiPower(f1_coeff)
-    f2 = MultiPower(f2_coeff)
-    f3 = MultiPower(f3_coeff)
-    f4 = MultiPower(f4_coeff)
-    f5 = MultiPower(f5_coeff)
-    f6 = MultiPower(f6_coeff)
+    f2 = MultiPower(np.array([[[3/16,-5/2,0],[0,3/16,0],[0,0,0]],
+                              [[0,0,1],[0,0,0],[0,0,0]],
+                              [[0,0,0],[0,0,0],[0,0,0]]]))
+
+    f3 = MultiPower(np.array([[[0,1,1/2],[0,3/40,1],[0,0,0]],
+                              [[-1/2,20/3,0],[-3/80,0,0],[0,0,0]],
+                              [[0,0,0],[0,0,0],[0,0,0]]]))
+
+    f4 = MultiPower(np.array([[[3/32,-7/5,0,1],[-3/16,83/32,0,0],[0,0,0,0],[0,0,0,0]],
+                              [[3/40,-1,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
+                              [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
+                              [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]]))
+
+    f5 = MultiPower(np.array([[[5,0,0],[0,0,0],[0,0,0]],
+                              [[0,-2,0],[0,0,0],[0,0,0]],
+                              [[1,0,0],[0,0,0],[0,0,0]]]))
+
+    f6 = MultiPower(np.array([[[0,0,0],[0,0,0],[1,0,0]],
+                              [[0,-8/3,0],[0,0,0],[0,0,0]],
+                              [[0,0,0],[0,0,0],[0,0,0]]]))
 
     G = [f1, f2, f3, f4, f5, f6]
+    rf = RootFinder(G)
     basis = rf.makeVectorBasis(G)
     trueBasis = [(0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,0,1),(0,0,2),(1,0,1),(0,1,1)]
 
     assert (len(basis) == len(trueBasis)) and (m in basis for m in trueBasis), \
             "Failed on MultiPower in 3 vars."
 
-def testCoordinateVector():
-    f1 = MultiCheb(np.array([[0,-1.5,.5],[-1.5,1.5,0],[1,0,0]]))
-    f2 = MultiCheb(np.array([[0,0,0],[-1,0,1],[0,0,0]]))
-    f3 = MultiCheb(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]))
+def testOperatorMatrix():
+    f1 = MultiPower(np.array([[[5,0,0],[0,0,0],[0,0,0]],
+                          [[0,-2,0],[0,0,0],[0,0,0]],
+                          [[1,0,0],[0,0,0],[0,0,0]]]))
+
+    f2 = MultiPower(np.array([[[1,0,0],[0,1,0],[0,0,0]],
+                          [[0,0,0],[0,0,0],[1,0,0]],
+                          [[0,0,0],[0,0,0],[0,0,0]]]))
+
+    f3 = MultiPower(np.array([[[0,0,0],[0,0,0],[3,0,0]],
+                          [[0,-8,0],[0,0,0],[0,0,0]],
+                          [[0,0,0],[0,0,0],[0,0,0]]]))
+
+    F = [f1, f2, f3]
+    Gr = Groebner(F)
+    rf = RootFinder(Gr)
+
+    x = MultiPower(np.array([[0],[1]]))
+
+    mx_RealEig = [eig.real for eig in \
+        np.linalg.eigvals(rf.operatorMatrix(x)) if (eig.imag == 0)]
+
+    assert(len(mx_RealEig) == 2)
+    assert(np.allclose(mx_RealEig, [-1.100987715, .9657124563], atol=1.e-8))
+
+def testOperatorMatrix_2():
+    f1 = MultiPower(np.array([[0,-1.5,.5],[-1.5,1.5,0],[1,0,0]]))
+    f2 = MultiPower(np.array([[0,0,0],[-1,0,1],[0,0,0]]))
+    f3 = MultiPower(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]))
     G = [f1, f2, f3]
     rf = RootFinder(G)
+
+    x = MultiPower(np.array([[0],[1]]))
+    y = MultiPower(np.array([[0,1]]))
+
+    mx_Eig = np.linalg.eigvals(rf.operatorMatrix(x))
+    my_Eig = np.linalg.eigvals(rf.operatorMatrix(y))
+
+    assert(len(mx_Eig) == 5)
+    assert(len(my_Eig) == 5)
+    assert(np.allclose(mx_Eig, [-1., 2., 1., 1., 0.]))
+    assert(np.allclose(my_Eig, [1., -1., 1., -1., 0.]))
