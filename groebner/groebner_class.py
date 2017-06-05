@@ -96,13 +96,7 @@ class Groebner(object):
             i+=1
             pass
         print("WE WIN")
-<<<<<<< HEAD
-        for p in self.old_polys:
-            print(p.coeff)
-        print("Reduced - ")
-=======
         print("Basis - ")
->>>>>>> c80d88fb62d0b52581fe7657c4f8da887870b683
         return self.reduce_groebner_basis()
         pass
 
