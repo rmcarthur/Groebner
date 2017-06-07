@@ -33,7 +33,7 @@ class RootFinder(object):
     coordinateVector(self, poly)
         Calculates the coordinate vector of the given polynomial's coset in
         C[x_1,...,x_n]/I.
-    operatorMatrix(self, poly)
+    multMatrix(self, poly)
         Calculates the matrix m_f where f is the polynomial given. The
         eigenvalues of the computed matrix are the values of f on V(I).
     '''
@@ -90,7 +90,7 @@ class RootFinder(object):
 
         return basis
 
-    def operatorMatrix(self, poly):
+    def multMatrix(self, poly):
         '''
         Finds the matrix of the linear operator m_f on A = C[x_1,...,x_n]/I
         where f is the polynomial argument. The linear operator m_f is defined
@@ -108,6 +108,7 @@ class RootFinder(object):
         multOperatorMatrix : square numpy array
             The matrix m_f
         '''
+        print("ENTERED MULTMATRIX")
 
         # Reshape poly's coefficienet matrix if it is not in the same number
         # of variables as the polynomials in the Groebner basis.
@@ -128,8 +129,11 @@ class RootFinder(object):
             monomial = self.vectorBasis[i]
             poly_ = poly.mon_mult(monomial)
 
+            print("CALLING COORDINATEVECTOR")
             operatorMatrix[:,i] = self.coordinateVector(poly_)
+            print("operatorMatrix:\n", operatorMatrix)
 
+        print("RETURNING FROM MULTMATRIX")
         return operatorMatrix
 
     def coordinateVector(self, poly):
@@ -145,19 +149,23 @@ class RootFinder(object):
             The coordinate vector of the given polynomial's coset in
             A = C[x_1,...x_n]/I as a vector space over C
         '''
+        print("ENTERED COORDINATEVECTOR")
 
+        print("CALLING REDUCE_POLY")
         poly = self.reduce_poly(poly)
 
         # reverse the array since self.vectorBasis is in increasing order
         # and monomialList() gives a list in decreasing order
-        poly_terms = poly.monomialList()[::-1]
+        poly_terms = poly.monomialList()
         assert(len(poly_terms) <= self.vectorSpaceDimension)
 
         coordinateVector = [0] * self.vectorSpaceDimension
         for monomial in poly_terms:
+            print("monomial:", monomial)
             coordinateVector[self.vectorBasis.index(monomial)] = \
                 poly.coeff[monomial]
 
+        print("RETURNING FROM COORDINATEVECTOR")
         return coordinateVector
 
     def _divides(self, mon1, mon2):
@@ -191,35 +199,39 @@ class RootFinder(object):
         polynomial object
             the unique remainder of poly divided by self.GB
         '''
+        print("ENTERED REDUCE_POLY")
+
         change = True
         while change:
             change = False
+            # Go through polynomials in Groebner basis
             for basis_poly in self.GB:
-                if basis_poly != poly and \
-                self._divides(basis_poly.lead_term, poly.lead_term):
-
-                    monomial = tuple(np.subtract(
+                # If the LT of the polynomial in the Groebner basis divides
+                # the LT of poly
+                if basis_poly != poly and self._divides(basis_poly.lead_term, poly.lead_term):
+                    # Get the quotient LT(poly)/LT(basis_poly)
+                    LT_quotient = tuple(np.subtract(
                         poly.lead_term,basis_poly.lead_term))
 
-                    new = basis_poly.mon_mult(monomial)
+                    new = basis_poly.mon_mult(LT_quotient)
 
-                    lcm = np.maximum(poly.coeff.shape, new.coeff.shape)
+                    # Get max value of shapes to know how much to pad
+                    max_shape = np.maximum(poly.coeff.shape, new.coeff.shape)
 
-                    poly_pad = np.subtract(lcm, poly.coeff.shape)
-                    poly_pad[np.where(poly_pad<0)]=0
+                    poly_pad = np.subtract(max_shape, poly.coeff.shape)
                     pad_poly = self._pad_back(poly_pad, poly)
 
-                    new_pad = np.subtract(lcm, new.coeff.shape)
-                    new_pad[np.where(new_pad<0)]=0
+                    new_pad = np.subtract(max_shape, new.coeff.shape)
                     pad_new = self._pad_back(new_pad,new)
 
-                    new_coeff = pad_poly.coeff-(poly.lead_coeff/basis_poly.lead_coeff)*pad_new.coeff
-                    new_coeff[np.where(abs(new_coeff) < 1.e-10)]=0 #Get rid of floating point errors to make more stable
+                    new_coeff = pad_poly.coeff- \
+                        (poly.lead_coeff/basis_poly.lead_coeff)*pad_new.coeff
+                    new_coeff[np.where(abs(new_coeff) < 1.e-10)]=0
                     poly.__init__(new_coeff)
                     change = True
+                else:
                     pass
-                pass
-            pass
+        print("RETURNING FROM REDUCE_POLY")
         return poly
 
     def _pad_back(self,mon,poly):

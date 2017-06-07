@@ -54,7 +54,7 @@ def test_makeVectorBasis_2():
     assert (len(basis) == len(trueBasis)) and (m in basis for m in trueBasis), \
             "Failed on MultiPower in 3 vars."
 
-def testOperatorMatrix():
+def testMultMatrix():
     f1 = MultiPower(np.array([[[5,0,0],[0,0,0],[0,0,0]],
                           [[0,-2,0],[0,0,0],[0,0,0]],
                           [[1,0,0],[0,0,0],[0,0,0]]]))
@@ -72,14 +72,26 @@ def testOperatorMatrix():
     rf = RootFinder(Gr)
 
     x = MultiPower(np.array([[0],[1]]))
+    y = MultiPower(np.array([[0,1]]))
+    z = MultiPower(np.array([[[0,1]]]))
 
     mx_RealEig = [eig.real for eig in \
-        np.linalg.eigvals(rf.operatorMatrix(x)) if (eig.imag == 0)]
+        np.linalg.eigvals(rf.multMatrix(x)) if (eig.imag == 0)]
+
+    my_RealEig = [eig.real for eig in \
+        np.linalg.eigvals(rf.multMatrix(y)) if (eig.imag==0)]
+
+    mz_RealEig = [eig.real for eig in \
+        np.linalg.eigvals(rf.multMatrix(z)) if (eig.imag==0)]
 
     assert(len(mx_RealEig) == 2)
+    assert(len(my_RealEig) == 2)
+    assert(len(mz_RealEig) == 2)
     assert(np.allclose(mx_RealEig, [-1.100987715, .9657124563], atol=1.e-8))
+    assert(np.allclose(my_RealEig, [-2.878002536, -2.81249605], atol=1.e-8))
+    assert(np.allclose(mz_RealEig, [3.071618528, -2.821182227], atol=1.e-8))
 
-def testOperatorMatrix_2():
+def testMultMatrix_2():
     f1 = MultiPower(np.array([[0,-1.5,.5],[-1.5,1.5,0],[1,0,0]]))
     f2 = MultiPower(np.array([[0,0,0],[-1,0,1],[0,0,0]]))
     f3 = MultiPower(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]))
@@ -89,8 +101,8 @@ def testOperatorMatrix_2():
     x = MultiPower(np.array([[0],[1]]))
     y = MultiPower(np.array([[0,1]]))
 
-    mx_Eig = np.linalg.eigvals(rf.operatorMatrix(x))
-    my_Eig = np.linalg.eigvals(rf.operatorMatrix(y))
+    mx_Eig = np.linalg.eigvals(rf.multMatrix(x))
+    my_Eig = np.linalg.eigvals(rf.multMatrix(y))
 
     assert(len(mx_Eig) == 5)
     assert(len(my_Eig) == 5)
