@@ -36,8 +36,6 @@ class MultiPower(Polynomial):
         '''
         Here we add an addition class.
         '''
-        
-
         return MultiPower(self.coeff + other.coeff)
 
     def __sub__(self,other):

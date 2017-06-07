@@ -108,7 +108,6 @@ class RootFinder(object):
         multOperatorMatrix : square numpy array
             The matrix m_f
         '''
-        print("ENTERED MULTMATRIX")
 
         # Reshape poly's coefficienet matrix if it is not in the same number
         # of variables as the polynomials in the Groebner basis.
@@ -129,11 +128,8 @@ class RootFinder(object):
             monomial = self.vectorBasis[i]
             poly_ = poly.mon_mult(monomial)
 
-            print("CALLING COORDINATEVECTOR")
             operatorMatrix[:,i] = self.coordinateVector(poly_)
-            print("operatorMatrix:\n", operatorMatrix)
 
-        print("RETURNING FROM MULTMATRIX")
         return operatorMatrix
 
     def coordinateVector(self, poly):
@@ -149,9 +145,7 @@ class RootFinder(object):
             The coordinate vector of the given polynomial's coset in
             A = C[x_1,...x_n]/I as a vector space over C
         '''
-        print("ENTERED COORDINATEVECTOR")
 
-        print("CALLING REDUCE_POLY")
         poly = self.reduce_poly(poly)
 
         # reverse the array since self.vectorBasis is in increasing order
@@ -161,11 +155,9 @@ class RootFinder(object):
 
         coordinateVector = [0] * self.vectorSpaceDimension
         for monomial in poly_terms:
-            print("monomial:", monomial)
             coordinateVector[self.vectorBasis.index(monomial)] = \
                 poly.coeff[monomial]
 
-        print("RETURNING FROM COORDINATEVECTOR")
         return coordinateVector
 
     def _divides(self, mon1, mon2):
@@ -184,7 +176,7 @@ class RootFinder(object):
         '''
         return all(np.subtract(mon2, mon1) >= 0)
 
-    def reduce_poly(self, poly):
+    def reduce_poly(self, poly, basis=None):
         '''
         Divides a polynomial by the Groebner basis using the standard
         multivariate division algorithm and returns the remainder
@@ -199,13 +191,16 @@ class RootFinder(object):
         polynomial object
             the unique remainder of poly divided by self.GB
         '''
-        print("ENTERED REDUCE_POLY")
+        if (basis is None):
+            basis = self.GB
 
-        change = True
-        while change:
-            change = False
+        remainder_coeff = np.zeros_like(poly.coeff, dtype=float)
+
+        # while poly is not the zero polynomial
+        while np.any(poly.coeff):
+            divisible = False
             # Go through polynomials in Groebner basis
-            for basis_poly in self.GB:
+            for basis_poly in basis:
                 # If the LT of the polynomial in the Groebner basis divides
                 # the LT of poly
                 if basis_poly != poly and self._divides(basis_poly.lead_term, poly.lead_term):
@@ -224,15 +219,33 @@ class RootFinder(object):
                     new_pad = np.subtract(max_shape, new.coeff.shape)
                     pad_new = self._pad_back(new_pad,new)
 
-                    new_coeff = pad_poly.coeff- \
+                    new_coeff = pad_poly.coeff - \
                         (poly.lead_coeff/basis_poly.lead_coeff)*pad_new.coeff
                     new_coeff[np.where(abs(new_coeff) < 1.e-10)]=0
-                    poly.__init__(new_coeff)
-                    change = True
-                else:
-                    pass
-        print("RETURNING FROM REDUCE_POLY")
-        return poly
+                    poly.__init__(new_coeff, clean_zeros=False)
+
+                    divisible = True
+                    break
+
+            if not divisible:
+                lcm = np.maximum(poly.coeff.shape, remainder_coeff.shape)
+                remainder_pad = np.subtract(lcm, remainder_coeff.shape)
+                remainder_coeff = \
+                    self._pad_remainder(remainder_pad, remainder_coeff)
+
+                # Add lead term to remainder
+                polyLT = poly.lead_term
+                remainder_coeff[polyLT] = poly.coeff[polyLT]
+
+                # Subtract LT from poly
+                new_coeff = poly.coeff
+                new_coeff[poly.lead_term] = 0
+                poly.__init__(new_coeff)
+
+        if (type(poly) == MultiPower):
+            return MultiPower(remainder_coeff)
+        else:
+            return MultiCheb(remainder_coeff)
 
     def _pad_back(self,mon,poly):
         tuple1 = []
@@ -241,7 +254,14 @@ class RootFinder(object):
             tuple1.append(list1)
         if type(poly) == MultiPower:
             return MultiPower(np.pad(poly.coeff, tuple1, 'constant', \
-            constant_values = 0), clean_zeros = False)
+            constant_values=0), clean_zeros = False)
         elif type(poly) == MultiCheb:
             return MultiCheb(np.pad(poly.coeff, tuple1, 'constant', \
-            constant_values = 0), clean_zeros = False)
+            constant_values=0), clean_zeros = False)
+
+    def _pad_remainder(self, pad, remainder):
+        _list = []
+        for i in pad:
+            _tuple = (0,i)
+            _list.append(_tuple)
+        return np.pad(remainder, _list, 'constant', constant_values=0)
