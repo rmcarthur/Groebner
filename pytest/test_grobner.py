@@ -333,7 +333,14 @@ def test_triangular_solve():
     assert(np.allclose(new_matrix,f(1)))
 
 
-# Added to test timing: 
+
+def test_init_():
+    C = MultiPower(np.array([[-1,0,1],[0,0,0]]))
+    D = MultiCheb(np.array([[-1,0,0],[0,1,0],[1,0,0]]))
+    with pytest.raises(ValueError):
+        grob = Groebner([C,D])
+'''
+ # Added to test timing: 
 def test_timing():
     """Test the rrqr_reduce function. 
     """
@@ -357,11 +364,6 @@ def test_timing():
                                   [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]]
                                                                                   ]
                                                                                                            ))
-    grob = Groebner([A,B,C])
+    grob = Groebner([A,B])
     grob.solve()
-    
-def test_init_():
-    C = MultiPower(np.array([[-1,0,1],[0,0,0]]))
-    D = MultiCheb(np.array([[-1,0,0],[0,1,0],[1,0,0]]))
-    with pytest.raises(ValueError):
-        grob = Groebner([C,D])
+'''  
