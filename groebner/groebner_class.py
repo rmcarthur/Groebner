@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 global_accuracy = 1.e-10
 #If clean is true then at a couple of places (end of rrqr_reduce and end of add r to matrix) things close to 0 will be made 0.
 #Might make it more stable, might make it less stable. Not sure.
-clean = False
+clean =False  
 
 class Groebner(object):
 
@@ -71,7 +71,6 @@ class Groebner(object):
                 self.original_lm_dict[Term(p.lead_term)] = p
 
         self._add_polys(self.new_polys + self.old_polys)
-        pass
 
     def solve(self, qr_reduction = True):
         '''
@@ -94,11 +93,9 @@ class Groebner(object):
             print(self.np_matrix.shape)
             polys_were_added = self.reduce_matrix(qr_reduction = qr_reduction)
             i+=1
-            pass
         print("WE WIN")
         print("Basis - ")
         return self.reduce_groebner_basis()
-        pass
 
     def reduce_groebner_basis(self):
         '''
@@ -113,19 +110,15 @@ class Groebner(object):
                 hasOne = True
             if np.sum(np.sum(abs(poly.coeff))) > global_accuracy:
                 groebner_basis.append(poly)
-                pass
-            pass
         if hasOne:
             groebner_basis = list()
             for poly in self.old_polys:
                 if all([i==1 for i in poly.coeff.shape]):
                     groebner_basis.append(poly)
                     break
-            pass
         #groebner_basis = self.reduce_polys(groebner_basis)
         for p in groebner_basis:
             print(p.coeff)
-            pass
         return groebner_basis
 
     def sort_matrix(self):
@@ -134,7 +127,6 @@ class Groebner(object):
         '''
         argsort_list, self.matrix_terms = self.argsort(self.matrix_terms)
         self.np_matrix = self.np_matrix[:,argsort_list]
-        pass
 
     def argsort(self, index_list):
         '''
@@ -165,7 +157,6 @@ class Groebner(object):
         #Removes all 0 polynomials
         non_zero_polynomial = np.sum(abs(self.np_matrix),axis=1)>0 ##Increasing this will get rid of small things.
         self.np_matrix = self.np_matrix[non_zero_polynomial,:] #Only keeps the non_zero_polymonials
-        pass
 
     def sm_to_poly(self,rows,reduced_matrix):
         '''
@@ -194,7 +185,6 @@ class Groebner(object):
             else:
                 poly = MultiCheb(coeff)
                 p_list.append(poly)
-            pass
         return p_list
 
     def _add_poly_to_matrix(self, p, adding_r = False):
@@ -242,7 +232,6 @@ class Groebner(object):
                     self.np_matrix = np.hstack((self.np_matrix, zeros))
                 self.matrix_terms.append(idx_term)
                 self.np_matrix[-1,-1] = coeff_val
-        pass
 
     def _add_polys(self, p_list):
         '''
@@ -251,7 +240,6 @@ class Groebner(object):
         '''
         for p in p_list:
             self._add_poly_to_matrix(p)
-        pass
 
     def _lcm(self,a,b):
         '''
@@ -310,8 +298,8 @@ class Groebner(object):
                 # add the phi's on to the Groebner Matrix.
                 self._add_poly_to_matrix(p_a)
                 self._add_poly_to_matrix(p_b)
-        pass
 
+      
     def phi_criterion(self,i,j,B,phi):
         # Need to run tests
         '''
@@ -332,16 +320,18 @@ class Groebner(object):
             return True
         # List of new and old polynomials.
         polys = self.new_polys+self.old_polys
-        #Always add these?, they are helping to reduce our basis.
-        #if all(polys[i].lead_term == self._lcm(polys[i],polys[j])) or all(polys[j].lead_term == self._lcm(polys[i],polys[j])):
+        #Always add these?, they are helping to reduce our basis.< I just ran some tests, the timing is about the same. 
+        #if all(polys[j].lead_term == self._lcm(polys[i],polys[j])) or all(polys[i].lead_term == self._lcm(polys[i],polys[j])) :
         #    return True
+
+
 
         # Relative Prime check: If the lead terms of i and j are relative primes, phi is not needed
         if all([a*b == 0 for a,b in zip(polys[i].lead_term,polys[j].lead_term)]):
             return False
 
-        else:
         # Another criterion
+        else:
             for l in range(len(polys)):
                 #print ("For l = {}:".format(l))
 
@@ -368,8 +358,10 @@ class Groebner(object):
                     return False
 
         # Function will return True and calculate phi if none of the checks passed for all l's.
-        return True
+  
+            return True
 
+        
     def _build_maxheap(self):
         '''
         Builds a maxheap for use in r polynomial calculation
@@ -378,7 +370,6 @@ class Groebner(object):
         for mon in self.term_set:
             if(mon not in self.lead_term_set): #Adds every monomial that isn't a lead term to the heap
                 self.monheap.heappush(mon)
-        pass
 
     def calc_r(self, m):
         '''
@@ -408,7 +399,6 @@ class Groebner(object):
         self.sort_matrix()
         if clean:
             self.clean_matrix()
-        pass
 
     def reduce_matrix(self, qr_reduction=True):
         '''
@@ -421,20 +411,15 @@ class Groebner(object):
             Q,R,P = qr(self.np_matrix, pivoting = True) #rrqr reduce it
             PT = self.inverse_P(P)
             diagonals = np.diagonal(R) #Go along the diagonals to find the rank
-            i = 0
-            while abs(diagonals[i]) > global_accuracy:
-                i += 1
-                if i == len(diagonals):
-                    break
-            rank = i
+            rank = np.sum(np.abs(diagonals)>global_accuracy)
             reorder = R[:,PT]
             full_rank = reorder[:rank,]
 
             ##I think we could ignore the getting full rank and just use this line, as the full length would be found in
             ##the recursion. We would just have to remove the bottom zeros before passing to triangular solve.
-            ##full_rank = self.np_matrix
             reduced_matrix = self.rrqr_reduce(full_rank)
             reduced_matrix = self.triangular_solve(reduced_matrix)
+            print(reduced_matrix)
             #plt.matshow([i==0 for i in reduced_matrix])
             #plt.matshow([abs(i)<global_accuracy for i in reduced_matrix])
         else:
@@ -459,7 +444,6 @@ class Groebner(object):
             else:
                 already_looked_at.add(i)
                 new_poly_spots.append(i) #This row gives a new leading monomial
-            pass
 
         self.old_polys = self.sm_to_poly(old_poly_spots, reduced_matrix)
         self.new_polys = self.sm_to_poly(new_poly_spots, reduced_matrix)
@@ -478,7 +462,6 @@ class Groebner(object):
         ##This would replace all small values in the matrix with 0.
         matrix[np.where(abs(matrix) < global_accuracy)]=0
         return matrix
-        pass
 
     def rrqr_reduce(self, matrix):
         if matrix.shape[0]==0 or matrix.shape[1]==0:
@@ -489,12 +472,7 @@ class Groebner(object):
         Q,R,P = qr(A, pivoting = True) #rrqr reduce it
         PT = self.inverse_P(P)
         diagonals = np.diagonal(R) #Go along the diagonals to find the rank
-        i = 0
-        while abs(diagonals[i]) > global_accuracy:
-            i += 1
-            if i == len(diagonals):
-                break
-        rank = i
+        rank = np.sum(np.abs(diagonals)>global_accuracy) 
         if rank == height: #full rank, do qr on it
             Q,R = qr(A)
             A = R #qr reduce A
@@ -672,16 +650,12 @@ class Groebner(object):
                     poly.__init__(new_coeff)
                     #print(poly.coeff)
                     change = True
-                    pass
-                pass
-            pass
         non_zeros = list()
         for p in polys:
             p.coeff[np.where(abs(p.coeff) < global_accuracy)]=0
             if p.lead_term==None or p in non_zeros:
                 continue
             non_zeros.append(p)
-            pass
         return non_zeros
 
     def reduce_poly(self, poly):
@@ -715,9 +689,7 @@ class Groebner(object):
                     new_coeff[np.where(abs(new_coeff) < global_accuracy)]=0 #Get rid of floating point errors to make more stable
                     poly.__init__(new_coeff)
                     change = True
-                    pass
-                pass
-            pass
         return poly
+
 
     """
