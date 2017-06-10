@@ -1,26 +1,25 @@
 import numpy as np
 import os, sys
 sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
-from root_finder import RootFinder
+import root_finder as rf
 from multi_power import MultiPower
 from multi_cheb import MultiCheb
 from groebner_class import Groebner
 import pytest
 import pdb
 
-def test_makeVectorBasis():
+def test_vectorSpaceBasis():
     f1 = MultiPower(np.array([[0,-1.5,.5],[-1.5,1.5,0],[1,0,0]]))
     f2 = MultiPower(np.array([[0,0,0],[-1,0,1],[0,0,0]]))
     f3 = MultiPower(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]))
     G = [f1, f2, f3]
-    rf = RootFinder(G)
-    basis = rf.vectorBasis
+    basis = rf.vectorSpaceBasis(G)
     trueBasis = [(0,0), (1,0), (0,1), (1,1), (0,2)]
 
     assert (len(basis) == len(trueBasis)) and (m in basis for m in trueBasis), \
             "Failed on MultiPower in 2 vars."
 
-def test_makeVectorBasis_2():
+def test_vectorSpaceBasis_2():
     f1 = MultiPower(np.array([[[0,0,1],[0,3/20,0],[0,0,0]],
                               [[0,0,0],[-3/40,1,0],[0,0,0]],
                               [[0,0,0],[0,0,0],[0,0,0]]]))
@@ -47,8 +46,7 @@ def test_makeVectorBasis_2():
                               [[0,0,0],[0,0,0],[0,0,0]]]))
 
     G = [f1, f2, f3, f4, f5, f6]
-    rf = RootFinder(G)
-    basis = rf.makeVectorBasis(G)
+    basis = rf.vectorSpaceBasis(G)
     trueBasis = [(0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,0,1),(0,0,2),(1,0,1),(0,1,1)]
 
     assert (len(basis) == len(trueBasis)) and (m in basis for m in trueBasis), \
@@ -58,16 +56,14 @@ def testReducePoly():
     poly = MultiPower(np.array([[-3],[2],[-4],[1]]))
     g = MultiPower(np.array([[2],[1]]))
 
-    rf = RootFinder([g])
-    reduced = rf.reduce_poly(poly)
+    reduced = rf.reduce_poly(poly, [g])
     assert(reduced.coeff == np.array([[-31.]]))
 
 def testReducePoly_2():
     poly = MultiPower(np.array([[-7],[2],[-13],[4]]))
     g = MultiPower(np.array([[-2],[3],[1]]))
 
-    rf = RootFinder([g])
-    reduced = rf.reduce_poly(poly)
+    reduced = rf.reduce_poly(poly, [g])
     assert(np.all(reduced.coeff == np.array([[-57.],[85.]])))
 
 def testReducePoly_3():
@@ -85,11 +81,8 @@ def testReducePoly_3():
                          [0,0,0,0],
                          [0,0,0,0]]))
 
-    rf = RootFinder([g1, g2])
-    reduced = rf.reduce_poly(poly)
-    result = np.all(reduced.coeff == np.array([[0,0,0],[1,2,2]]))
-    print(result)
-    assert(result)
+    reduced = rf.reduce_poly(poly, [g1, g2])
+    assert(np.all(reduced.coeff == np.array([[0,0,0],[1,2,2]])))
 
 def testMultMatrix():
     f1 = MultiPower(np.array([[[5,0,0],[0,0,0],[0,0,0]],
@@ -106,20 +99,22 @@ def testMultMatrix():
 
     F = [f1, f2, f3]
     Gr = Groebner(F)
-    rf = RootFinder(Gr)
+
+    GB = Gr.solve()
+    VB = rf.vectorSpaceBasis(GB)
 
     x = MultiPower(np.array([[0],[1]]))
     y = MultiPower(np.array([[0,1]]))
     z = MultiPower(np.array([[[0,1]]]))
 
     mx_RealEig = [eig.real for eig in \
-        np.linalg.eigvals(rf.multMatrix(x)) if (eig.imag == 0)]
+        np.linalg.eigvals(rf.multMatrix(x, GB, VB)) if (eig.imag == 0)]
 
     my_RealEig = [eig.real for eig in \
-        np.linalg.eigvals(rf.multMatrix(y)) if (eig.imag==0)]
+        np.linalg.eigvals(rf.multMatrix(y, GB, VB)) if (eig.imag==0)]
 
     mz_RealEig = [eig.real for eig in \
-        np.linalg.eigvals(rf.multMatrix(z)) if (eig.imag==0)]
+        np.linalg.eigvals(rf.multMatrix(z, GB, VB)) if (eig.imag==0)]
 
     assert(len(mx_RealEig) == 2)
     assert(len(my_RealEig) == 2)
@@ -132,14 +127,15 @@ def testMultMatrix_2():
     f1 = MultiPower(np.array([[0,-1.5,.5],[-1.5,1.5,0],[1,0,0]]))
     f2 = MultiPower(np.array([[0,0,0],[-1,0,1],[0,0,0]]))
     f3 = MultiPower(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]))
-    G = [f1, f2, f3]
-    rf = RootFinder(G)
+
+    GB = [f1, f2, f3]
+    VB = rf.vectorSpaceBasis(GB)
 
     x = MultiPower(np.array([[0],[1]]))
     y = MultiPower(np.array([[0,1]]))
 
-    mx_Eig = np.linalg.eigvals(rf.multMatrix(x))
-    my_Eig = np.linalg.eigvals(rf.multMatrix(y))
+    mx_Eig = np.linalg.eigvals(rf.multMatrix(x, GB, VB))
+    my_Eig = np.linalg.eigvals(rf.multMatrix(y, GB, VB))
 
     assert(len(mx_Eig) == 5)
     assert(len(my_Eig) == 5)
