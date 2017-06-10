@@ -54,6 +54,43 @@ def test_makeVectorBasis_2():
     assert (len(basis) == len(trueBasis)) and (m in basis for m in trueBasis), \
             "Failed on MultiPower in 3 vars."
 
+def testReducePoly():
+    poly = MultiPower(np.array([[-3],[2],[-4],[1]]))
+    g = MultiPower(np.array([[2],[1]]))
+
+    rf = RootFinder([g])
+    reduced = rf.reduce_poly(poly)
+    assert(reduced.coeff == np.array([[-31.]]))
+
+def testReducePoly_2():
+    poly = MultiPower(np.array([[-7],[2],[-13],[4]]))
+    g = MultiPower(np.array([[-2],[3],[1]]))
+
+    rf = RootFinder([g])
+    reduced = rf.reduce_poly(poly)
+    assert(np.all(reduced.coeff == np.array([[-57.],[85.]])))
+
+def testReducePoly_3():
+    poly = MultiPower(np.array([[0,-1,0,1],
+                            [0,2,0,0],
+                            [0,0,1,0],
+                            [1,0,0,0]]))
+
+    g1 = MultiPower(np.array([[0,0,0],
+                          [-2,0,0],
+                          [1,0,0]]))
+
+    g2 = MultiPower(np.array([[0,-1,0,1],
+                         [3,0,0,0],
+                         [0,0,0,0],
+                         [0,0,0,0]]))
+
+    rf = RootFinder([g1, g2])
+    reduced = rf.reduce_poly(poly)
+    result = np.all(reduced.coeff == np.array([[0,0,0],[1,2,2]]))
+    print(result)
+    assert(result)
+
 def testMultMatrix():
     f1 = MultiPower(np.array([[[5,0,0],[0,0,0],[0,0,0]],
                           [[0,-2,0],[0,0,0],[0,0,0]],

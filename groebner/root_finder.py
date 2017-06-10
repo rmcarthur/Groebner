@@ -203,7 +203,7 @@ class RootFinder(object):
             for basis_poly in basis:
                 # If the LT of the polynomial in the Groebner basis divides
                 # the LT of poly
-                if basis_poly != poly and self._divides(basis_poly.lead_term, poly.lead_term):
+                if self._divides(basis_poly.lead_term, poly.lead_term):
                     # Get the quotient LT(poly)/LT(basis_poly)
                     LT_quotient = tuple(np.subtract(
                         poly.lead_term,basis_poly.lead_term))
@@ -214,15 +214,17 @@ class RootFinder(object):
                     max_shape = np.maximum(poly.coeff.shape, new.coeff.shape)
 
                     poly_pad = np.subtract(max_shape, poly.coeff.shape)
-                    pad_poly = self._pad_back(poly_pad, poly)
+                    poly.__init__(self.pad_matrix(poly_pad, poly.coeff), clean_zeros=False)
 
                     new_pad = np.subtract(max_shape, new.coeff.shape)
-                    pad_new = self._pad_back(new_pad,new)
+                    new.__init__(self.pad_matrix(new_pad, new.coeff), clean_zeros=False)
 
-                    new_coeff = pad_poly.coeff - \
-                        (poly.lead_coeff/basis_poly.lead_coeff)*pad_new.coeff
+                    new_coeff = poly.coeff - \
+                        (poly.lead_coeff/basis_poly.lead_coeff)*new.coeff
                     new_coeff[np.where(abs(new_coeff) < 1.e-10)]=0
                     poly.__init__(new_coeff, clean_zeros=False)
+
+                    print("poly:\n", poly.coeff)
 
                     divisible = True
                     break
@@ -231,7 +233,7 @@ class RootFinder(object):
                 lcm = np.maximum(poly.coeff.shape, remainder_coeff.shape)
                 remainder_pad = np.subtract(lcm, remainder_coeff.shape)
                 remainder_coeff = \
-                    self._pad_remainder(remainder_pad, remainder_coeff)
+                    self.pad_matrix(remainder_pad, remainder_coeff)
 
                 # Add lead term to remainder
                 polyLT = poly.lead_term
@@ -247,21 +249,9 @@ class RootFinder(object):
         else:
             return MultiCheb(remainder_coeff)
 
-    def _pad_back(self,mon,poly):
-        tuple1 = []
-        for i in mon:
-            list1 = (0,i)
-            tuple1.append(list1)
-        if type(poly) == MultiPower:
-            return MultiPower(np.pad(poly.coeff, tuple1, 'constant', \
-            constant_values=0), clean_zeros = False)
-        elif type(poly) == MultiCheb:
-            return MultiCheb(np.pad(poly.coeff, tuple1, 'constant', \
-            constant_values=0), clean_zeros = False)
-
-    def _pad_remainder(self, pad, remainder):
+    def pad_matrix(self, pad, matrix):
         _list = []
         for i in pad:
             _tuple = (0,i)
             _list.append(_tuple)
-        return np.pad(remainder, _list, 'constant', constant_values=0)
+        return np.pad(matrix, _list, 'constant', constant_values=0)
