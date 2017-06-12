@@ -7,6 +7,7 @@ else:
 from multi_cheb import MultiCheb
 import pytest
 import pdb
+import random
 
 def test_add():
     a1 = np.arange(27).reshape((3,3,3))
@@ -56,3 +57,28 @@ def test_mon_mult():
 
     assert np.allclose(P1.coeff.all(), P2.coeff.all())
     assert np.allclose(T1.coeff.all(), T2.coeff.all())
+
+def test_mon_mult_2():
+    possible_dim = np.random.randint(1,5, (1,10))
+    dim = possible_dim[0, random.randint(1,9)]
+    shape = list()
+    for i in range(dim):
+        shape.append(random.randint(2,10))
+    matrix1 = np.random.randint(1,101,(shape))
+    M1 = MultiCheb(matrix1)
+
+    shape2 = list()
+    for i in range(dim):
+        shape2.append(random.randint(2,10))
+    matrix2 = np.ones(shape2)
+    M2 = MultiCheb(matrix2)
+
+    M3 = M1*M2
+
+    for index, i in np.ndenumerate(M2.coeff):
+        if sum(index) == 0:
+            M4 = MultiCheb.mon_mult(M1, index)
+        else:
+            M4 = M4 + MultiCheb.mon_mult(M1, index)
+
+    assert np.allclose(M3.coeff, M4.coeff)

@@ -6,6 +6,7 @@ else:
     sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
 from multi_power import MultiPower
 import pytest
+import random
 
 
 def test_add():
@@ -138,10 +139,28 @@ def test_generator():
             assert (idx == [ 0.,  0.,  0.,  1.]).all()
         elif(i == 24):
             assert (idx == [ 0.,  0.,  0.,  0.]).all()
-'''
-def test_mon_mult():
 
-    polynomial =
-    for i in range(20):
-        monomial = x**i
-'''
+def test_mon_mult():
+    possible_dim = np.random.randint(1,5, (1,10))
+    dim = possible_dim[0, random.randint(1,9)]
+    shape = list()
+    for i in range(dim):
+        shape.append(random.randint(2,10))
+    matrix1 = np.random.randint(1,101,(shape))
+    M1 = MultiPower(matrix1)
+
+    shape2 = list()
+    for i in range(dim):
+        shape2.append(random.randint(2,10))
+    matrix2 = np.ones(shape2)
+    M2 = MultiPower(matrix2)
+
+    M3 = M1*M2
+
+    for index, i in np.ndenumerate(M2.coeff):
+        if sum(index) == 0:
+            M4 = MultiPower.mon_mult(M1, index)
+        else:
+            M4 = M4 + MultiPower.mon_mult(M1, index)
+
+    assert np.allclose(M3.coeff, M4.coeff)
