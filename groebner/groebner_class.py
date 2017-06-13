@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 global_accuracy = 1.e-10
 #If clean is true then at a couple of places (end of rrqr_reduce and end of add r to matrix) things close to 0 will be made 0.
 #Might make it more stable, might make it less stable. Not sure.
-clean =False  
+clean = False  
 
 class Groebner(object):
 
@@ -382,7 +382,10 @@ class Groebner(object):
                     c = [j-i for i,j in zip(l,m)]
                     if not l == m: #Make sure c isn't all 0
                         return p.mon_mult(c)
-        return MultiPower(np.array([0]))
+        if self.power:
+            return MultiPower(np.array([0]))
+        else:
+            return MultiCheb(np.array([0]))
 
     def add_r_to_matrix(self):
         '''
