@@ -18,17 +18,21 @@ clean = False
 
 
 '''
+ * They are currently saved into a dictionary called items that is passed in and out of most functions.* 
+    variables: 
         polys -- a list of polynomials that generate your ideal
         old_polys - The polynomials that have already gone through the solve loop once. Starts as none.
         new_polys - New polynomials that have never been throught the solve loop. All of them at first.
-        self.np_matrix - The full matrix of polynomials.
-        self.term_set - The set of monomials in the matrix. Contains Terms.
-        self.lead_term_set - The set of monomials that are lead terms of some polynomial in the matrix. Contains Terms.
+        np_matrix - The full matrix of polynomials.
+        term_set - The set of monomials in the matrix. Contains Terms.
+        lead_term_set - The set of monomials that are lead terms of some polynomial in the matrix. Contains Terms.
+        
         These next three are used to determine what polynomials to keep after reduction.
-        self.original_lms - The leading Terms of the original polynomials (not phi's or r's). Keep these as old_polys.
-        self.original_lm_dict - A dictionary of the leading terms to their polynomials
-        self.not_needed_lms - The leading terms that have another leading term that divided them. We won't keep these.
-        self.duplicate_lms - The leading terms that occur multiple times. Keep these as old_polys
+        original_lms - The leading Terms of the original polynomials (not phi's or r's). Keep these as old_polys.
+        original_lm_dict - A dictionary of the leading terms to their polynomials
+        not_needed_lms - The leading terms that have another leading term that divided them. We won't keep these.
+        duplicate_lms - The leading terms that occur multiple times. Keep these as old_polys
+    
 '''
 
 def solve(polys,qr_reduction = True):
