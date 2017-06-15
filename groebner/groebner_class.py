@@ -93,6 +93,7 @@ class Groebner(object):
             print(self.np_matrix.shape)
             polys_were_added = self.reduce_matrix(qr_reduction = qr_reduction)
             i+=1
+    
         print("WE WIN")
         print("Basis - ")
         return self.reduce_groebner_basis()
