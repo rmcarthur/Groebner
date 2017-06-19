@@ -57,12 +57,34 @@ class MultiPower(Polynomial):
         '''
         here we add leading terms?
         '''
-        return MultiPower(fftconvolve(self.coeff, other.coeff))
+        if self.shape != other.shape:
+            new_self, new_other = self.match_size(self,other)
+        else:
+            new_self, new_other = self, other
+
+        return MultiPower(fftconvolve(new_self.coeff, new_other.coeff))
 
     def match_size(self,a,b):
         '''
         Matches the shape of the polynomials
         '''
+        A_shape, B_shape = list(a.shape), list(b.shape)
+        A, B = a.coeff, b.coeff
+        if len(A_shape) != len(B_shape):
+            add_to_shape = 0
+            if len(A_shape) < len(B_shape):
+                add_to_shape = len(B_shape) - len(A_shape)
+                for i in range(add_to_shape):
+                    A_shape.insert(0,1)
+                a = A.reshape(A_shape)
+                a = MultiPower(a)
+            else:
+                add_to_shape = len(A_shape) - len(B_shape)
+                for i in range(add_to_shape):
+                    B_shape.insert(0,1)
+                b = B.reshape(B_shape)
+                b = MultiPower(b)
+
         new_shape = [max(i,j) for i,j in itertools.zip_longest(a.shape, b.shape, fillvalue = 0)] #finds the largest length in each dimmension
         # finds the difference between the largest length and the original shapes in each dimmension.
         add_a = [i-j for i,j in itertools.zip_longest(new_shape, a.shape, fillvalue = 0)]

@@ -58,8 +58,8 @@ def test_mon_mult():
     assert np.allclose(P1.coeff.all(), P2.coeff.all())
     assert np.allclose(T1.coeff.all(), T2.coeff.all())
 
-def test_mon_mult_2():
-    possible_dim = np.random.randint(1,5, (1,10))
+def test_mon_mult_random():
+    possible_dim = np.random.randint(1,4, (1,10))
     dim = possible_dim[0, random.randint(1,9)]
     shape = list()
     for i in range(dim):
@@ -67,6 +67,7 @@ def test_mon_mult_2():
     matrix1 = np.random.randint(1,101,(shape))
     M1 = MultiCheb(matrix1)
 
+    #dim2 = possible_dim[0, random.randint(1,9)]
     shape2 = list()
     for i in range(dim):
         shape2.append(random.randint(2,10))
