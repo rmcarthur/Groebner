@@ -65,7 +65,24 @@ class MultiCheb(Polynomial):
         '''
         Matches the shape of the polynomials
         '''
-        new_shape = [max(i,j) for i,j in itertools.zip_longest(a.shape, b.shape)] #finds the largest length in each dimmension
+        A_shape, B_shape = list(a.shape), list(b.shape)
+        A, B = a.coeff, b.coeff
+        if len(A_shape) != len(B_shape):
+            add_to_shape = 0
+            if len(A_shape) < len(B_shape):
+                add_to_shape = len(B_shape) - len(A_shape)
+                for i in range(add_to_shape):
+                    A_shape.insert(0,1)
+                a = A.reshape(A_shape)
+                a = MultiCheb(a)
+            else:
+                add_to_shape = len(A_shape) - len(B_shape)
+                for i in range(add_to_shape):
+                    B_shape.insert(0,1)
+                b = B.reshape(B_shape)
+                b = MultiCheb(b)
+
+        new_shape = [max(i,j) for i,j in itertools.zip_longest(a.shape, b.shape, fillvalue = 0)] #finds the largest length in each dimmension
         # finds the difference between the largest length and the original shapes in each dimmension.
         add_a = [i-j for i,j in itertools.zip_longest(new_shape, a.shape, fillvalue = 0)]
         add_b = [i-j for i,j in itertools.zip_longest(new_shape, b.shape, fillvalue = 0)]
@@ -206,6 +223,16 @@ class MultiCheb(Polynomial):
         p1 = MultiCheb(np.pad(self.coeff, (pad_values), 'constant', constant_values = 0))
 
         solution_matrix = self.coeff
+
+        largest_idx = [i-1 for i in solution_matrix.shape]
+        new_shape = [max(i,j) for i,j in itertools.zip_longest(largest_idx, idx, fillvalue = 0)] #finds the largest length in each dimmension
+        add_a = [i-j for i,j in itertools.zip_longest(new_shape, largest_idx, fillvalue = 0)]
+        add_a_list = np.zeros((len(new_shape),2))
+        #changes the second column to the values of add_a and add_b.
+        add_a_list[:,1] = add_a
+        #uses add_a_list and add_b_list to pad each polynomial appropriately.
+        solution_matrix = np.pad(solution_matrix,add_a_list.astype(int),'constant')
+
         number_of_dim = solution_matrix.ndim
         shape_of_self = solution_matrix.shape
 

@@ -6,6 +6,7 @@ else:
     sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
 from multi_power import MultiPower
 import pytest
+import random
 
 
 def test_add():
@@ -138,10 +139,54 @@ def test_generator():
             assert (idx == [ 0.,  0.,  0.,  1.]).all()
         elif(i == 24):
             assert (idx == [ 0.,  0.,  0.,  0.]).all()
-'''
-def test_mon_mult():
 
-    polynomial =
-    for i in range(20):
-        monomial = x**i
-'''
+def test_mon_mult():
+    """
+    Tests monomial multiplication using normal polynomial multiplication.
+    """
+
+    mon = (1,2)
+    Poly = MultiPower(np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12],[13,14,15,16]]))
+    mon_matr = MultiPower(np.array([[0,0,0,0],[0,0,1,0],[0,0,0,0],[0,0,0,0]]))
+    P1 = mon_matr*Poly
+    P2 = MultiPower.mon_mult(Poly, mon)
+
+    mon2 = (0,1,1)
+    Poly2 = MultiPower(np.arange(1,9).reshape(2,2,2))
+    mon_matr2 = MultiPower(np.array([[[0,0],[0,1]],[[0,0],[0,0]]]))
+    T1 = mon_matr2*Poly2
+    T2 = MultiPower.mon_mult(Poly2, mon2)
+
+
+    assert np.allclose(P1.coeff.all(), P2.coeff.all(), atol = 1.0)
+    assert np.allclose(T1.coeff.all(), T2.coeff.all(), atol = 1.0e-10)
+
+def test_mon_mult_random():
+    possible_dim = np.random.randint(1,5, (1,10))
+    dim = possible_dim[0, random.randint(1,9)]
+    shape = list()
+    for i in range(dim):
+        shape.append(random.randint(2,10))
+    matrix1 = np.random.randint(1,101,(shape))
+    M1 = MultiPower(matrix1)
+
+    shape2 = list()
+    for i in range(dim):
+        shape2.append(random.randint(2,10))
+    matrix2 = np.ones(shape2)
+    M2 = MultiPower(matrix2)
+
+    M3 = M1*M2
+
+    for index, i in np.ndenumerate(M2.coeff):
+        if sum(index) == 0:
+            M4 = MultiPower.mon_mult(M1, index)
+        else:
+            M4 = M4 + MultiPower.mon_mult(M1, index)
+
+    if M3.shape != M4.shape:
+        new_M3, new_M4 = MultiPower.match_size(M3,M3,M4)
+    else:
+        new_M3, new_M4 = M3, M4
+
+    assert np.allclose(new_M3.coeff, new_M4.coeff)
