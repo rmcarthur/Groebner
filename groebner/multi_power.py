@@ -134,27 +134,29 @@ class MultiPower(Polynomial):
 
         parameters
         ----------
-        point : tuple
+        point : tuple or list
             the point at which to evaluate the polynomial
 
         returns
         -------
-        float
+        complex
             value of the polynomial at the given point
         '''
         if len(point) != len(self.coeff.shape):
-            raise ValueError('Cannot evaluate point {} with polynomial of \
-            shape {}'.format(point, self.coeff.shape))
+            raise ValueError('Cannot evaluate polynomial in {} variables at point {}'\
+            .format(self.dim, point))
 
         poly_monomials = self.monomialList()
 
         poly_value = 0
         for mon in poly_monomials:
-            print(mon)
             mon_value = 1
             for i in range(len(point)):
-                mon_value *= math.pow(point[i], mon[i])
+                mon_value *= pow(point[i], mon[i])
             mon_value *= self.coeff[mon]
             poly_value += mon_value
 
-        return poly_value
+        if (abs(poly_value < 1.e-10)):
+            return 0
+        else:
+            return poly_value

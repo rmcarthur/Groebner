@@ -86,7 +86,7 @@ class Polynomial(object):
         '''
         max_values = tuple(self.shape)-np.ones_like(self.shape)
         base = max_values
-        print("Base - ",base)
+        #print("Base - ",base)
         current = np.zeros(self.dim)
         yield base-current
         while True:
@@ -97,7 +97,7 @@ class Polynomial(object):
                 current[self.dim-1] = i
                 #This can't return false, as we start at the begenning. Always has enough room to spill over.
                 self.check_column_overload(max_values, current, self.dim-1)
-                print("Current - ",current)
+                #print("Current - ",current)
                 yield base - current
                 while onward:
                     #Find the leftmost thing
@@ -113,7 +113,7 @@ class Polynomial(object):
                         if self.check_column_overload(max_values, current, left_most_spot-1):
                             onward = False
                         else:
-                            print("Current - ",current)
+                            #print("Current - ",current)
                             yield base - current
                     elif(current[j] == i):
                         #Reset it for the next run
@@ -149,7 +149,7 @@ class Polynomial(object):
                                 current[new_spot_to_check-1] += (amount+1)
                                 spot_to_check = new_spot_to_check-1
                         if(onward):
-                            print("Current - ",current)
+                            #print("Current - ",current)
                             yield base-current
             return
 
@@ -170,7 +170,7 @@ class Polynomial(object):
 
     def update_lead_term(self,start = None):
         found = False
-        
+
         non_zeros = set()
         for i in zip(*np.where(self.coeff != 0)):
             non_zeros.add(Term(i))
@@ -180,7 +180,7 @@ class Polynomial(object):
         else:
             self.lead_term = None
             self.lead_coeff = 0
-        
+
         """ THE GENERATOR IS BROKEN RIGHT NOW. UNTIL FIXED USE THIS NEW, ALTHOUGH PROSSIBLY SLOWER CODE.
         if self.order == 'degrevlex':
             gen = self.degrevlex_gen()
