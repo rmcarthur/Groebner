@@ -3,6 +3,7 @@ import numpy as np
 from scipy.signal import convolve, fftconvolve
 from polynomial import Polynomial
 import itertools
+import math
 
 """
 1/11/17
@@ -126,3 +127,34 @@ class MultiPower(Polynomial):
             list1 = (i,0)
             tuple1.append(list1)
         return MultiPower(np.pad(self.coeff, tuple1, 'constant', constant_values = 0), clean_zeros = False)
+
+    def evaluate_at(self, point):
+        '''
+        Evaluates the polynomial at the given point.
+
+        parameters
+        ----------
+        point : tuple
+            the point at which to evaluate the polynomial
+
+        returns
+        -------
+        float
+            value of the polynomial at the given point
+        '''
+        if len(point) != len(self.coeff.shape):
+            raise ValueError('Cannot evaluate point {} with polynomial of \
+            shape {}'.format(point, self.coeff.shape))
+
+        poly_monomials = self.monomialList()
+
+        poly_value = 0
+        for mon in poly_monomials:
+            print(mon)
+            mon_value = 1
+            for i in range(len(point)):
+                mon_value *= math.pow(point[i], mon[i])
+            mon_value *= self.coeff[mon]
+            poly_value += mon_value
+
+        return poly_value
