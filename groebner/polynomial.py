@@ -2,7 +2,7 @@ from __future__ import division, print_function
 import numpy as np
 from scipy.signal import fftconvolve, convolve
 import itertools
-
+from maxheap import Term
 
 class Polynomial(object):
     def __init__(self, coeff, order='degrevlex', lead_term=None, clean_zeros = True):
@@ -18,12 +18,12 @@ class Polynomial(object):
         self.terms = np.prod(self.coeff.shape)
         self.order = order
         self.shape = self.coeff.shape
-        self.max_term = np.max(self.shape) -1
+        self.max_term = np.max(self.shape) - 1
         if lead_term is None:
             self.update_lead_term()
         else:
             self.lead_term = lead_term
-    
+
     def clean_coeff(self):
         """
         Gets rid of any 0's on the outside of the coeff matrix, not giving any info.
@@ -36,7 +36,7 @@ class Polynomial(object):
             while not change:
                 temp = np.delete(self.coeff,-1,axis=axis)
                 sum_temp = np.sum(abs(temp))
-                if sum_temp == sum_values:
+                if abs(sum_temp - sum_values) < 1.e-10:
                     self.coeff = temp
                 else:
                     change = True
@@ -81,9 +81,12 @@ class Polynomial(object):
         '''
         yields grevlex ordering co-ordinates in order to find
         the leading coefficent
+        Note - this is just meant to quickly find the leading coefficient. For trying to grab all the non-zero
+        terms     for i in zip(*np.where(poly.coeff != 0)):  will be much faster.
         '''
         max_values = tuple(self.shape)-np.ones_like(self.shape)
         base = max_values
+        print("Base - ",base)
         current = np.zeros(self.dim)
         yield base-current
         while True:
@@ -94,9 +97,11 @@ class Polynomial(object):
                 current[self.dim-1] = i
                 #This can't return false, as we start at the begenning. Always has enough room to spill over.
                 self.check_column_overload(max_values, current, self.dim-1)
+                print("Current - ",current)
                 yield base - current
                 while onward:
                     #Find the leftmost thing
+                    #left_most_spot = np.where(current != 0)[0][0]
                     for j in range(0, self.dim):
                         if(current[j] != 0):
                             left_most_spot = j
@@ -108,11 +113,13 @@ class Polynomial(object):
                         if self.check_column_overload(max_values, current, left_most_spot-1):
                             onward = False
                         else:
+                            print("Current - ",current)
                             yield base - current
                     elif(current[j] == i):
                         #Reset it for the next run
                         current[0] = 0
                         onward = False
+                        #THIS IS WRONG, THE CURRENT SPOT MIGHT BE ABLE TO HOLD MORE!
                     else:
                         #if I'm at the end push back everything to the next leftmost thing and slide it plus 1
                         amount = current[0]
@@ -142,16 +149,45 @@ class Polynomial(object):
                                 current[new_spot_to_check-1] += (amount+1)
                                 spot_to_check = new_spot_to_check-1
                         if(onward):
+                            print("Current - ",current)
                             yield base-current
             return
 
+    def monomialList(self):
+        '''
+        return
+        ------
+        monomials : list of tuples
+            list of monomials that make up the polynomial in degrevlex order
+        '''
+        monomials = []
+        gen = self.degrevlex_gen()
+        for index in gen:
+            index = tuple(map(lambda i: int(i), index))
+            if (self.coeff[index] != 0):
+                monomials.append(index)
+        return monomials
+
     def update_lead_term(self,start = None):
         found = False
+        
+        non_zeros = set()
+        for i in zip(*np.where(self.coeff != 0)):
+            non_zeros.add(Term(i))
+        if len(non_zeros) != 0:
+            self.lead_term = max(non_zeros).val
+            self.lead_coeff = self.coeff[tuple(self.lead_term)]
+        else:
+            self.lead_term = None
+            self.lead_coeff = 0
+        
+        """ THE GENERATOR IS BROKEN RIGHT NOW. UNTIL FIXED USE THIS NEW, ALTHOUGH PROSSIBLY SLOWER CODE.
         if self.order == 'degrevlex':
             gen = self.degrevlex_gen()
             for idx in gen:
+                print(idx)
                 idx = tuple(map(lambda i: int(i), idx))
-                if abs(self.coeff[tuple(idx)]) > 1.e-10:
+                if self.coeff[tuple(idx)] != 0:
                     self.lead_term = idx
                     self.lead_coeff = self.coeff[tuple(idx)]
                     found = True
@@ -159,7 +195,6 @@ class Polynomial(object):
         if not found:
             self.lead_term = None
             self.lead_coeff = 0
-        else:
-            self.coeff = self.coeff/self.lead_coeff
-            self.lead_coeff = 1.
+        """
+
         #print('Leading Coeff is {}'.format(self.lead_term))

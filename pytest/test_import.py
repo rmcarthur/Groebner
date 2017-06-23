@@ -1,7 +1,10 @@
 import numpy as np
 import pytest
 import sys, os
-sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
+if (os.name == 'nt'):
+    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('\\')[:-1]) + '/groebner')
+else:
+    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
 import maxheap
 from multi_cheb import MultiCheb
 from multi_power import MultiPower
