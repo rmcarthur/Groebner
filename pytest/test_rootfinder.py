@@ -13,7 +13,7 @@ def test_vectorSpaceBasis():
     f2 = MultiPower(np.array([[0,0,0],[-1,0,1],[0,0,0]]))
     f3 = MultiPower(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]))
     G = [f1, f2, f3]
-    basis = rf.vectorSpaceBasis(G)
+    basis = rf.vectorSpaceBasis(G)[0]
     trueBasis = [(0,0), (1,0), (0,1), (1,1), (0,2)]
 
     assert (len(basis) == len(trueBasis)) and (m in basis for m in trueBasis), \
@@ -46,7 +46,7 @@ def test_vectorSpaceBasis_2():
                               [[0,0,0],[0,0,0],[0,0,0]]]))
 
     G = [f1, f2, f3, f4, f5, f6]
-    basis = rf.vectorSpaceBasis(G)
+    basis = rf.vectorSpaceBasis(G)[0]
     trueBasis = [(0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,0,1),(0,0,2),(1,0,1),(0,1,1)]
 
     assert (len(basis) == len(trueBasis)) and (m in basis for m in trueBasis), \
@@ -101,7 +101,7 @@ def testMultMatrix():
     Gr = Groebner(F)
 
     GB = Gr.solve()
-    VB = rf.vectorSpaceBasis(GB)
+    VB = rf.vectorSpaceBasis(GB)[0]
 
     x = MultiPower(np.array([[0],[1]]))
     y = MultiPower(np.array([[0,1]]))
@@ -129,7 +129,7 @@ def testMultMatrix_2():
     f3 = MultiPower(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]))
 
     GB = [f1, f2, f3]
-    VB = rf.vectorSpaceBasis(GB)
+    VB = rf.vectorSpaceBasis(GB)[0]
 
     x = MultiPower(np.array([[0],[1]]))
     y = MultiPower(np.array([[0,1]]))
@@ -141,3 +141,48 @@ def testMultMatrix_2():
     assert(len(my_Eig) == 5)
     assert(np.allclose(mx_Eig, [-1., 2., 1., 1., 0.]))
     assert(np.allclose(my_Eig, [1., -1., 1., -1., 0.]))
+
+def testRoots():
+    f1 = MultiPower(np.array([[0,-1.5,.5],[-1.5,1.5,0],[1,0,0]]), clean_zeros=False)
+    f2 = MultiPower(np.array([[0,0,0],[-1,0,1],[0,0,0]]), clean_zeros=False)
+    f3 = MultiPower(np.array([[0,-1,0,1],[0,0,0,0],[0,0,0,0],[0,0,0,0]]), clean_zeros=False)
+
+    roots = rf.roots([f1, f2, f3])
+    values_at_roots = np.array([[f1.evaluate_at(root) for root in roots],
+                    [f2.evaluate_at(root) for root in roots],
+                    [f3.evaluate_at(root) for root in roots]])
+
+    assert(np.all(values_at_roots==0))
+
+def testRoots2():
+    f1 = MultiPower(np.array([[[5,0,0],[0,0,0],[0,0,0]],
+                          [[0,-2,0],[0,0,0],[0,0,0]],
+                          [[1,0,0],[0,0,0],[0,0,0]]]))
+
+    f2 = MultiPower(np.array([[[1,0,0],[0,1,0],[0,0,0]],
+                          [[0,0,0],[0,0,0],[1,0,0]],
+                          [[0,0,0],[0,0,0],[0,0,0]]]))
+
+    f3 = MultiPower(np.array([[[0,0,0],[0,0,0],[3,0,0]],
+                          [[0,-8,0],[0,0,0],[0,0,0]],
+                          [[0,0,0],[0,0,0],[0,0,0]]]))
+
+    roots = rf.roots([f1, f2, f3])
+
+    values_at_roots = np.array([[f1.evaluate_at(root) for root in roots],
+                    [f2.evaluate_at(root) for root in roots],
+                    [f3.evaluate_at(root) for root in roots]])
+
+    assert(np.all(values_at_roots==0))
+
+def testRoots3():
+    # roots of [x^2-y, x^3-y+1]
+    f1 = MultiPower(np.array([[0,-1],[0,0],[1,0]]))
+    f2 = MultiPower(np.array([[1,-1],[0,0],[0,0],[1,0]]))
+
+    roots = rf.roots([f1, f2])
+
+    values_at_roots = np.array([[f1.evaluate_at(root) for root in roots],
+                                [f2.evaluate_at(root) for root in roots]])
+
+    assert(np.all(values_at_roots==0))

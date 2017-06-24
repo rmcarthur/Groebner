@@ -64,9 +64,10 @@ def roots(polys):
     print("VB:", VB)
     m_f = multMatrix(f, GB, VB)
 
-    # Get list of indecies of single variables and store vars that were not
+    # Get list of indexes of single variables and store vars that were not
     # in the vector space basis. Note that the length of var_list will be dim.
-    var_indexes = np.zeros(dim, dtype=int)
+    # (the dimension of the polynomial, that is, the number of variables)
+    var_indexes = np.array([-1 for i in range(dim)])
     vars_not_in_basis = []
     for i in range(len(var_list)):
         var = var_list[i]
@@ -325,3 +326,6 @@ def _random_poly(_type, _vars):
         return MultiCheb(random_poly_coeff)
     else:
         return MultiPower(random_poly_coeff)
+
+def _eval_for_LT(poly, point_map):
+    pass
