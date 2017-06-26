@@ -186,3 +186,20 @@ def testRoots3():
                                 [f2.evaluate_at(root) for root in roots]])
 
     assert(np.all(values_at_roots==0))
+
+def testRoots4():
+    f1 = MultiPower(np.array([[5,-1],[1,0]]))
+    f2 = MultiPower(np.array([[1,-1],[-1,0]]))
+
+    root = rf.roots([f1, f2])[0]
+
+    assert(all(np.isclose(root, [-2,3])))
+
+def testRoots5():
+    f1 = MultiPower(np.array([[0,-1],[0,0],[1,0]]))
+    f2 = MultiPower(np.array([[1,-1],[1,0]]))
+
+    roots = rf.roots([f1, f2])
+
+    assert(all(np.isclose(roots[0], [-0.61803399,  0.38196601])))
+    assert(all(np.isclose(roots[1], [1.61803399,  2.61803399])))

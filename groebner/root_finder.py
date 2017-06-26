@@ -37,14 +37,21 @@ def roots(polys):
     # Calculate groebner basis
     G = Groebner(polys)
     GB = G.solve()
+    dim = max(g.dim for g in GB)
 
+    # Check for no solutions
     if len(GB) == 1 and GB[0].coeff == 1:
-        return "No solutions"
+        print("No solutions")
+        return
+
+    # Make sure ideal is zero-dimensional
+    var_list = _get_var_list(dim)
+    if not _test_zero_dimensional(var_list, GB):
+        print("Ideal is not zero-dimensional; cannot calculate roots.")
+        return
 
     # Pick a random polynomial of the same type
     # and in the same number of variables as the Groebner basis
-    dim = max(g.dim for g in GB)
-    var_list = _get_var_list(dim)
     f = _random_poly(poly_type, var_list)
 
     # Get multiplication matrix
@@ -69,7 +76,6 @@ def roots(polys):
     vnib = False
     if len(vars_not_in_basis) != 0:
         vnib = True
-        print("Can't find roots of these yet...")
 
     # Get left eigenvectors
     eig = np.linalg.eig(m_f.T)[1]
@@ -197,8 +203,10 @@ def coordinateVector(poly, GB, basis):
         The coordinate vector of the given polynomial's coset in
         A = C[x_1,...x_n]/I as a vector space over C
     '''
+    print("orig_poly:\n", poly.coeff)
     vectorSpaceDim = len(basis)
     poly = reduce_poly(poly, GB)
+    print("reduced_poly:\n", poly.coeff)
 
     # reverse the array since self.vectorBasis is in increasing order
     # and monomialList() gives a list in decreasing order
@@ -339,3 +347,17 @@ def _get_poly_with_LT(LT, GB):
     for poly in GB:
         if poly.lead_term == LT:
             return poly
+
+def _test_zero_dimensional(_vars, GB):
+    LT_list = [p.lead_term for p in GB]
+
+    for var in _vars:
+        exists_multiple = False
+        for LT in LT_list:
+            if np.linalg.matrix_rank(np.array([list(var), list(LT)])) == 1:
+                exists_multiple = True
+                break
+        if not exists_multiple:
+            return False
+
+    return True
