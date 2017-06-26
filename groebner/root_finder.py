@@ -50,22 +50,26 @@ def roots(polys):
     # Get multiplication matrix
     VB, var_dict = vectorSpaceBasis(GB)
     print("VB:", VB)
+    print("var_dict:", var_dict)
     m_f = multMatrix(f, GB, VB)
 
     # Get list of indexes of single variables and store vars that were not
-    # in the vector space basis. Note that the length of var_list will be dim.
-    # (the dimension of the polynomial, that is, the number of variables)
+    # in the vector space basis.
     var_indexes = np.array([-1 for i in range(dim)])
-    vars_not_in_basis = []
+    vars_not_in_basis = {}
     for i in range(len(var_list)):
         var = var_list[i]
         if var in var_dict:
+            # note this assures x_i will be in the ith position in var_indexes
             var_indexes[i] = var_dict[var]
         else:
-            vars_not_in_basis.append(var)
+            # maps the position in the root to its variable
+            vars_not_in_basis[i] = var
 
+    vnib = False
     if len(vars_not_in_basis) != 0:
-        return "Can't find roots of these yet..."
+        vnib = True
+        print("Can't find roots of these yet...")
 
     # Get left eigenvectors
     eig = np.linalg.eig(m_f.T)[1]
@@ -74,7 +78,23 @@ def roots(polys):
 
     roots = []
     for v in eig_vectors:
-        roots.append(np.array([v[x]/v[0] for x in var_indexes]))
+        root = np.zeros(dim, dtype=complex)
+        # This will always work because var_indexes and root have the
+        # same length - dim - and var_indexes has the variables in the
+        # order they should be in the root
+        for i in range(dim):
+            x = var_indexes[i]
+            if x != -1:
+                root[i] = v[x]/v[0]
+        if vnib:
+            print("cur_root:", root)
+            for pos in list(vars_not_in_basis.keys())[::-1]:
+                GB_poly = _get_poly_with_LT(vars_not_in_basis[pos], GB)
+                print("GB_poly:\n", GB_poly.coeff)
+                var_value = GB_poly.evaluate_at(root) * -1
+                print("var_value:", var_value)
+                root[pos] = var_value
+        roots.append(root)
 
     return roots
 
@@ -314,3 +334,8 @@ def _random_poly(_type, _vars):
         return MultiCheb(random_poly_coeff)
     else:
         return MultiPower(random_poly_coeff)
+
+def _get_poly_with_LT(LT, GB):
+    for poly in GB:
+        if poly.lead_term == LT:
+            return poly

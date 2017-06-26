@@ -152,11 +152,12 @@ class MultiPower(Polynomial):
         for mon in poly_monomials:
             mon_value = 1
             for i in range(len(point)):
+                var_value = pow(point[i], mon[i])
                 mon_value *= pow(point[i], mon[i])
             mon_value *= self.coeff[mon]
             poly_value += mon_value
 
-        if (abs(poly_value < 1.e-10)):
+        if abs(poly_value) < 1.e-10:
             return 0
         else:
             return poly_value
