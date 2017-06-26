@@ -42,13 +42,13 @@ def roots(polys):
     # Check for no solutions
     if len(GB) == 1 and GB[0].coeff == 1:
         print("No solutions")
-        return
+        return -1
 
     # Make sure ideal is zero-dimensional
     var_list = _get_var_list(dim)
     if not _test_zero_dimensional(var_list, GB):
         print("Ideal is not zero-dimensional; cannot calculate roots.")
-        return
+        return -1
 
     # Pick a random polynomial of the same type
     # and in the same number of variables as the Groebner basis
