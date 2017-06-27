@@ -3,6 +3,7 @@ from multi_power import MultiPower
 from multi_cheb import MultiCheb
 import itertools
 from groebner_class import Groebner
+import cmath
 
 '''
 This module contains the tools necessary to find the points of the variety of the
@@ -37,22 +38,18 @@ def roots(polys):
     # Calculate groebner basis
     G = Groebner(polys)
     GB = G.solve()
-    dim = max(g.dim for g in GB)
+    dim = max(g.dim for g in GB) # dimension of the polynomials
 
     # Check for no solutions
-    if len(GB) == 1 and GB[0].coeff == 1:
+    if len(GB) == 1 and GB[0].coeff.shape == (1):
         print("No solutions")
         return -1
 
-    # Make sure ideal is zero-dimensional
-    var_list = _get_var_list(dim)
+    # Make sure ideal is zero-dimensional and get random polynomial
+    f, var_list = _random_poly(poly_type, dim)
     if not _test_zero_dimensional(var_list, GB):
         print("Ideal is not zero-dimensional; cannot calculate roots.")
         return -1
-
-    # Pick a random polynomial of the same type
-    # and in the same number of variables as the Groebner basis
-    f = _random_poly(poly_type, var_list)
 
     # Get multiplication matrix
     VB, var_dict = vectorSpaceBasis(GB)
@@ -65,9 +62,8 @@ def roots(polys):
     var_indexes = np.array([-1 for i in range(dim)])
     vars_not_in_basis = {}
     for i in range(len(var_list)):
-        var = var_list[i]
+        var = var_list[i] # x_i
         if var in var_dict:
-            # note this assures x_i will be in the ith position in var_indexes
             var_indexes[i] = var_dict[var]
         else:
             # maps the position in the root to its variable
@@ -127,31 +123,20 @@ def multMatrix(poly, GB, basis):
         The matrix m_f
     '''
 
-    # Reshape poly's coefficienet matrix if it is not in the same number
-    # of variables as the polynomials in the Groebner basis.
-    # (i.e. len(shape) is the number of variables the polynomial is in)
+    # All polys in GB will be in the same dimension, so just match poly with
+    # the first Groebner basis element
+    poly = _match_poly_dim(poly, GB[0])[0]
 
-    numVars = max(g.dim for g in GB)
-
-    polyVars = len(poly.coeff.shape)
-    if polyVars != numVars:
-        new_shape = [i for i in poly.coeff.shape]
-        for j in range(numVars-polyVars): new_shape.append(1)
-        if type(poly) is MultiPower:
-            poly = MultiPower(poly.coeff.reshape(tuple(new_shape)))
-        if type(poly) is MultiCheb:
-            poly = MultiCheb(poly.coeff.reshape(tuple(new_shape)))
-
-    dim = len(basis)
-    operatorMatrix = np.zeros((dim, dim))
+    dim = len(basis) # Dimension of the vector space basis
+    multMatrix = np.zeros((dim, dim))
 
     for i in range(dim):
         monomial = basis[i]
         poly_ = poly.mon_mult(monomial)
 
-        operatorMatrix[:,i] = coordinateVector(poly_, GB, basis)
+        multMatrix[:,i] = coordinateVector(poly_, GB, basis)
 
-    return operatorMatrix
+    return multMatrix
 
 def vectorSpaceBasis(GB):
     '''
@@ -168,6 +153,7 @@ def vectorSpaceBasis(GB):
         maps each variable to its position in the vector space basis
     '''
     LT_G = [f.lead_term for f in GB]
+    print("LT_G:", LT_G)
     possibleVarDegrees = [range(max(tup)) for tup in zip(*LT_G)]
     possibleMonomials = itertools.product(*possibleVarDegrees)
     basis = []
@@ -176,10 +162,10 @@ def vectorSpaceBasis(GB):
     for mon in possibleMonomials:
         divisible = False
         for LT in LT_G:
-            if (divides(LT, mon)):
+            if divides(LT, mon):
                  divisible = True
                  break
-        if (not divisible):
+        if not divisible:
             basis.append(mon)
             if (sum(mon) == 1):
                 var_to_pos_dict[mon] = basis.index(mon)
@@ -203,17 +189,16 @@ def coordinateVector(poly, GB, basis):
         The coordinate vector of the given polynomial's coset in
         A = C[x_1,...x_n]/I as a vector space over C
     '''
-    print("orig_poly:\n", poly.coeff)
-    vectorSpaceDim = len(basis)
+    dim = len(basis) # Dimension of vector space basis
     poly = reduce_poly(poly, GB)
-    print("reduced_poly:\n", poly.coeff)
 
     # reverse the array since self.vectorBasis is in increasing order
-    # and monomialList() gives a list in decreasing order
+    # and monomialList() gives a list in decreasing order - should speed
+    # things up
     poly_terms = poly.monomialList()[::-1]
-    assert(len(poly_terms) <= vectorSpaceDim)
+    assert(len(poly_terms) <= dim)
 
-    coordinateVector = [0] * vectorSpaceDim
+    coordinateVector = [0] * dim
     for monomial in poly_terms:
         coordinateVector[basis.index(monomial)] = \
             poly.coeff[monomial]
@@ -238,7 +223,7 @@ def divides(mon1, mon2):
 
 def reduce_poly(poly, divisors):
     '''
-    Divides a polynomial by the Groebner basis using the standard
+    Divides a polynomial by a set of divisor polynomials using the standard
     multivariate division algorithm and returns the remainder
 
     parameters
@@ -246,12 +231,12 @@ def reduce_poly(poly, divisors):
     polynomial : polynomial object
         the polynomial to be divided by the Groebner basis
     divisors : list of polynomial objects
-        Polynomials to divid poly by
+        polynomials to divide poly by
 
     return
     ------
     polynomial object
-        the unique remainder of poly divided by self.GB
+        the remainder of poly / divisors
     '''
 
     remainder_coeff = np.zeros_like(poly.coeff, dtype=float)
@@ -273,10 +258,10 @@ def reduce_poly(poly, divisors):
                 max_shape = np.maximum(poly.coeff.shape, new.coeff.shape)
 
                 poly_pad = np.subtract(max_shape, poly.coeff.shape)
-                poly.__init__(_pad_matrix(poly_pad, poly.coeff), clean_zeros=False)
+                poly.__init__(_pad_array(poly_pad, poly.coeff), clean_zeros=False)
 
                 new_pad = np.subtract(max_shape, new.coeff.shape)
-                new.__init__(_pad_matrix(new_pad, new.coeff), clean_zeros=False)
+                new.__init__(_pad_array(new_pad, new.coeff), clean_zeros=False)
 
                 new_coeff = poly.coeff - \
                     (poly.lead_coeff/divisor.lead_coeff)*new.coeff
@@ -289,8 +274,7 @@ def reduce_poly(poly, divisors):
         if not divisible:
             lcm = np.maximum(poly.coeff.shape, remainder_coeff.shape)
             remainder_pad = np.subtract(lcm, remainder_coeff.shape)
-            remainder_coeff = \
-                _pad_matrix(remainder_pad, remainder_coeff)
+            remainder_coeff = _pad_array(remainder_pad, remainder_coeff)
 
             # Add lead term to remainder
             polyLT = poly.lead_term
@@ -306,12 +290,12 @@ def reduce_poly(poly, divisors):
     else:
         return MultiCheb(remainder_coeff)
 
-def _pad_matrix(pad, matrix):
+def _pad_array(pad, array):
     _list = []
     for i in pad:
         _tuple = (0,i)
         _list.append(_tuple)
-    return np.pad(matrix, _list, 'constant', constant_values=0)
+    return np.pad(array, _list, 'constant', constant_values=0)
 
 def _get_var_list(dim):
     _vars = [] # list of the variables: [x_1, x_2, ..., x_n]
@@ -321,16 +305,13 @@ def _get_var_list(dim):
         _vars.append(tuple(var))
     return _vars
 
-def _random_poly(_type, _vars):
+def _random_poly(_type, dim):
     '''
     Generates a random polynomial that has the form
-    c_1x_1 + c_2x_2 + ... + c_nx_n where n = len(_vars) and each c_i is a randomly
+    c_1x_1 + c_2x_2 + ... + c_nx_n where n = dim and each c_i is a randomly
     chosen integer between 0 and 1000.
-
-    _vars should be the result of the _get_var_list(dim) method where dim is
-    the number of variables in which to create the polynomial.
     '''
-    dim = len(_vars)
+    _vars = _get_var_list(dim)
 
     random_poly_shape = [2 for i in range(dim)]
 
@@ -339,9 +320,9 @@ def _random_poly(_type, _vars):
         random_poly_coeff[var] = np.random.randint(1000)
 
     if _type == 'MultiCheb':
-        return MultiCheb(random_poly_coeff)
+        return MultiCheb(random_poly_coeff), _vars
     else:
-        return MultiPower(random_poly_coeff)
+        return MultiPower(random_poly_coeff), _vars
 
 def _get_poly_with_LT(LT, GB):
     for poly in GB:
@@ -361,3 +342,33 @@ def _test_zero_dimensional(_vars, GB):
             return False
 
     return True
+
+def _match_poly_dim(poly1, poly2):
+    poly_type = ''
+    if type(poly1) == MultiPower and type(poly2) == MultiPower:
+        poly_type = 'MultiPower'
+    elif type(poly1) == MultiCheb and type(poly2) == MultiCheb:
+        poly_type = 'MultiCheb'
+    else:
+        raise ValueError('Polynomials must be the same type')
+
+    max_vars = max(f.dim for f in [poly1, poly2])
+    poly1_vars = poly1.dim
+    poly2_vars = poly2.dim
+
+    if poly1_vars < max_vars:
+         for j in range(max_vars-poly1_vars):
+             coeff_reshaped = poly1.coeff[...,np.newaxis]
+         if poly_type == 'MultiPower':
+             poly1 = MultiPower(coeff_reshaped)
+         elif poly_type == 'MultiCheb':
+             poly1 = MultiCheb(coeff_reshaped)
+    elif poly2_vars < max_vars:
+        for j in range(max_vars-poly2_vars):
+            coeff_reshaped = poly2.coeff[...,np.newaxis]
+        if poly_type == 'MultiPower':
+            poly2 = MultiPower(coeff_reshaped)
+        elif poly_type == 'MultiCheb':
+            poly2 = MultiCheb(coeff_reshaped)
+
+    return poly1, poly2

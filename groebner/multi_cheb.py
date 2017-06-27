@@ -243,3 +243,6 @@ class MultiCheb(Polynomial):
         p2 = MultiCheb(solution_matrix)
         Pf = (p1+p2)
         return MultiCheb(.5*Pf.coeff)
+
+    def evaluate_at(self, point):
+        pass

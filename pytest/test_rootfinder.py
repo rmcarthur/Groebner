@@ -204,7 +204,7 @@ def testRoots5():
     assert(all(np.isclose(roots[0], [-0.61803399,  0.38196601])))
     assert(all(np.isclose(roots[1], [1.61803399,  2.61803399])))
 
-def testRoots6(): # test if ideal is not zero-dimensional
+def testRoots6(): # test when ideal is not zero-dimensional
     f1 = MultiPower(np.array([[-12,-12],[1,1],[1,1]]))
     f2 = MultiPower(np.array([[6,3,-3],[-2,-1,1]]))
 
