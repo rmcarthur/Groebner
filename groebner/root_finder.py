@@ -237,64 +237,55 @@ def reduce_poly(poly, divisors):
     polynomial object
         the remainder of poly / divisors
     '''
-
-    remainder_coeff = np.zeros_like(poly.coeff, dtype=float)
+    # init remainder polynomial
+    if type(poly) == MultiCheb:
+        remainder = MultiCheb(np.zeros((1,1)))
+    else:
+        remainder = MultiPower(np.zeros((1,1)))
 
     # while poly is not the zero polynomial
     while np.any(poly.coeff):
         divisible = False
         # Go through polynomials in set of divisors
         for divisor in divisors:
+            poly, divisor = _match_poly_dim(poly, divisor)
             # If the LT of the divisor divides the LT of poly
             if divides(divisor.lead_term, poly.lead_term):
                 # Get the quotient LT(poly)/LT(divisor)
                 LT_quotient = tuple(np.subtract(
                     poly.lead_term, divisor.lead_term))
 
-                new = divisor.mon_mult(LT_quotient)
+                poly_to_subtract = divisor.mon_mult(LT_quotient)
 
-                # Get max value of shapes to know how much to pad
-                max_shape = np.maximum(poly.coeff.shape, new.coeff.shape)
-
-                poly_pad = np.subtract(max_shape, poly.coeff.shape)
-                poly.__init__(_pad_array(poly_pad, poly.coeff), clean_zeros=False)
-
-                new_pad = np.subtract(max_shape, new.coeff.shape)
-                new.__init__(_pad_array(new_pad, new.coeff), clean_zeros=False)
+                # Match sizes of poly_to_subtract and poly so
+                # poly_to_subtract.coeff can be subtracted from poly.coeff
+                poly_to_subtract, poly = \
+                    poly_to_subtract.match_size(poly_to_subtract, poly)
 
                 new_coeff = poly.coeff - \
-                    (poly.lead_coeff/divisor.lead_coeff)*new.coeff
+                    (poly.lead_coeff/divisor.lead_coeff)*poly_to_subtract.coeff
                 new_coeff[np.where(abs(new_coeff) < permitted_round_error)]=0
-                poly.__init__(new_coeff, clean_zeros=False)
+                poly.__init__(new_coeff)
 
                 divisible = True
                 break
 
         if not divisible:
-            lcm = np.maximum(poly.coeff.shape, remainder_coeff.shape)
-            remainder_pad = np.subtract(lcm, remainder_coeff.shape)
-            remainder_coeff = _pad_array(remainder_pad, remainder_coeff)
+            remainder, poly = remainder.match_size(remainder, poly)
+
+            polyLT = poly.lead_term
 
             # Add lead term to remainder
-            polyLT = poly.lead_term
+            remainder_coeff = remainder.coeff
             remainder_coeff[polyLT] = poly.coeff[polyLT]
+            remainder.__init__(remainder_coeff)
 
             # Subtract LT from poly
             new_coeff = poly.coeff
-            new_coeff[poly.lead_term] = 0
+            new_coeff[polyLT] = 0
             poly.__init__(new_coeff)
 
-    if (type(poly) == MultiPower):
-        return MultiPower(remainder_coeff)
-    else:
-        return MultiCheb(remainder_coeff)
-
-def _pad_array(pad, array):
-    _list = []
-    for i in pad:
-        _tuple = (0,i)
-        _list.append(_tuple)
-    return np.pad(array, _list, 'constant', constant_values=0)
+    return remainder
 
 def _get_var_list(dim):
     _vars = [] # list of the variables: [x_1, x_2, ..., x_n]
@@ -343,6 +334,10 @@ def _test_zero_dimensional(_vars, GB):
     return True
 
 def _match_poly_dim(poly1, poly2):
+    # Do nothing if they are already the same dimension
+    if poly1.dim == poly2.dim:
+        return poly1, poly2
+
     poly_type = ''
     if type(poly1) == MultiPower and type(poly2) == MultiPower:
         poly_type = 'MultiPower'
@@ -351,9 +346,9 @@ def _match_poly_dim(poly1, poly2):
     else:
         raise ValueError('Polynomials must be the same type')
 
-    max_vars = max(f.dim for f in [poly1, poly2])
     poly1_vars = poly1.dim
     poly2_vars = poly2.dim
+    max_vars = max(poly1_vars, poly2_vars)
 
     if poly1_vars < max_vars:
          for j in range(max_vars-poly1_vars):

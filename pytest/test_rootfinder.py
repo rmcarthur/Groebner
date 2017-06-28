@@ -84,6 +84,20 @@ def testReducePoly_3():
     reduced = rf.reduce_poly(poly, [g1, g2])
     assert(np.all(reduced.coeff == np.array([[0,0,0],[1,2,2]])))
 
+def testReducePoly_4():
+    poly = MultiPower(np.array([[[-1,2,0],[0,0,0],[-3,0,0]],
+                           [[0,0,0],[2,0,0],[0,0,0]],
+                           [[0,0,0],[0,0,1],[0,0,0]]]))
+    d1 = MultiPower(np.array([[0,-3,0],
+                          [0,0,0],
+                          [1,0,0]]))
+    d2 = MultiPower(np.array([[0,0,0,1],
+                         [4,0,0,0]]))
+    d3 = MultiPower(np.array([[[-1,1]]]))
+
+    reduced = rf.reduce_poly(poly, [d1, d2, d3])
+    assert(np.all(reduced.coeff == np.array([[[1],[0]],[[0],[2]]])))
+
 def testMultMatrix():
     f1 = MultiPower(np.array([[[5,0,0],[0,0,0],[0,0,0]],
                           [[0,-2,0],[0,0,0],[0,0,0]],
@@ -154,7 +168,7 @@ def testRoots():
 
     assert(np.all(values_at_roots==0))
 
-def testRoots2():
+def testRoots_2():
     f1 = MultiPower(np.array([[[5,0,0],[0,0,0],[0,0,0]],
                           [[0,-2,0],[0,0,0],[0,0,0]],
                           [[1,0,0],[0,0,0],[0,0,0]]]))
@@ -175,7 +189,7 @@ def testRoots2():
 
     assert(np.all(values_at_roots==0))
 
-def testRoots3():
+def testRoots_3():
     # roots of [x^2-y, x^3-y+1]
     f1 = MultiPower(np.array([[0,-1],[0,0],[1,0]]))
     f2 = MultiPower(np.array([[1,-1],[0,0],[0,0],[1,0]]))
@@ -187,7 +201,7 @@ def testRoots3():
 
     assert(np.all(values_at_roots==0))
 
-def testRoots4():
+def testRoots_4():
     f1 = MultiPower(np.array([[5,-1],[1,0]]))
     f2 = MultiPower(np.array([[1,-1],[-1,0]]))
 
@@ -195,7 +209,7 @@ def testRoots4():
 
     assert(all(np.isclose(root, [-2,3])))
 
-def testRoots5():
+def testRoots_5():
     f1 = MultiPower(np.array([[0,-1],[0,0],[1,0]]))
     f2 = MultiPower(np.array([[1,-1],[1,0]]))
 
@@ -204,7 +218,7 @@ def testRoots5():
     assert(all(np.isclose(roots[0], [-0.61803399,  0.38196601])))
     assert(all(np.isclose(roots[1], [1.61803399,  2.61803399])))
 
-def testRoots6(): # test when ideal is not zero-dimensional
+def testRoots_6(): # test when ideal is not zero-dimensional
     f1 = MultiPower(np.array([[-12,-12],[1,1],[1,1]]))
     f2 = MultiPower(np.array([[6,3,-3],[-2,-1,1]]))
 
