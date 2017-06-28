@@ -3,7 +3,6 @@ from multi_power import MultiPower
 from multi_cheb import MultiCheb
 import itertools
 from groebner_class import Groebner
-import cmath
 
 '''
 This module contains the tools necessary to find the points of the variety of the
