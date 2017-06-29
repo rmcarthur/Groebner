@@ -98,6 +98,14 @@ def testReducePoly_4():
     reduced = rf.reduce_poly(poly, [d1, d2, d3])
     assert(np.all(reduced.coeff == np.array([[[1],[0]],[[0],[2]]])))
 
+def testCoordinateVector():
+    poly = MultiCheb(np.array([[0,1,0],[0,0,1],[1,0,0]]))
+    VB = [(2,0),(1,2),(0,1),(1,0)]
+    GB = [MultiCheb(np.array([[0,0,0],[0,0,0],[0,0,1]]))] # LT is big so nothing gets reduced
+
+    cv = rf.coordinateVector(poly, GB, VB)
+    assert(cv == [1,1,1,0])
+
 def testMultMatrix():
     f1 = MultiPower(np.array([[[5,0,0],[0,0,0],[0,0,0]],
                           [[0,-2,0],[0,0,0],[0,0,0]],

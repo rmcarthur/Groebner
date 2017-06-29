@@ -84,16 +84,17 @@ def roots(polys):
         # same length - dim - and var_indexes has the variables in the
         # order they should be in the root
         for i in range(dim):
-            x = var_indexes[i]
-            if x != -1:
-                root[i] = v[x]/v[0]
+            x_i_pos = var_indexes[i]
+            if x_i_pos != -1:
+                root[i] = v[x_i_pos]/v[0]
         if vnib:
-            print("cur_root:", root)
+            # Go through the indexes of variables not in the basis in
+            # decreasing order. It must be done in decreasing order for the
+            # roots to be calculated correctly, since the vars with lower
+            # indexes depend on the ones with higher indexes
             for pos in list(vars_not_in_basis.keys())[::-1]:
                 GB_poly = _get_poly_with_LT(vars_not_in_basis[pos], GB)
-                print("GB_poly:\n", GB_poly.coeff)
                 var_value = GB_poly.evaluate_at(root) * -1
-                print("var_value:", var_value)
                 root[pos] = var_value
         roots.append(root)
 
@@ -191,9 +192,6 @@ def coordinateVector(poly, GB, basis):
     dim = len(basis) # Dimension of vector space basis
     poly = reduce_poly(poly, GB)
 
-    # reverse the array since self.vectorBasis is in increasing order
-    # and monomialList() gives a list in decreasing order - should speed
-    # things up
     poly_terms = poly.monomialList()[::-1]
     assert(len(poly_terms) <= dim)
 
@@ -259,8 +257,7 @@ def reduce_poly(poly, divisors):
 
                 # Match sizes of poly_to_subtract and poly so
                 # poly_to_subtract.coeff can be subtracted from poly.coeff
-                poly_to_subtract, poly = \
-                    poly_to_subtract.match_size(poly_to_subtract, poly)
+                poly, poly_to_subtract = poly.match_size(poly, poly_to_subtract)
 
                 new_coeff = poly.coeff - \
                     (poly.lead_coeff/divisor.lead_coeff)*poly_to_subtract.coeff
