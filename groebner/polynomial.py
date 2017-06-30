@@ -198,3 +198,21 @@ class Polynomial(object):
         """
 
         #print('Leading Coeff is {}'.format(self.lead_term))
+
+    def evaluate_at(self, point):
+        '''
+        Evaluates the polynomial at the given point.
+
+        parameters
+        ----------
+        point : tuple or list
+            the point at which to evaluate the polynomial
+
+        returns
+        -------
+        complex
+            value of the polynomial at the given point
+        '''
+        if len(point) != len(self.coeff.shape):
+            raise ValueError('Cannot evaluate polynomial in {} variables at point {}'\
+            .format(self.dim, point))
