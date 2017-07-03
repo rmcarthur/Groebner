@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 global_accuracy = 1.e-10
 #If clean is true then at a couple of places (end of rrqr_reduce and end of add r to matrix) things close to 0 will be made 0.
 #Might make it more stable, might make it less stable. Not sure.
-clean = False  
+clean = False
 
 class Groebner(object):
 
@@ -22,7 +22,7 @@ class Groebner(object):
         '''
         polys -- a list of polynomials that generate your ideal
         self.old_polys - The polynomials that have already gone through the solve loop once. Starts as none.
-        self.new_polys - New polynomials that have never been throught the solve loop. All of them at first.
+        self.new_polys - New polynomials that have never been through the solve loop. All of them at first.
         self.np_matrix - The full matrix of polynomials.
         self.term_set - The set of monomials in the matrix. Contains Terms.
         self.lead_term_set - The set of monomials that are lead terms of some polynomial in the matrix. Contains Terms.
@@ -93,7 +93,7 @@ class Groebner(object):
             print(self.np_matrix.shape)
             polys_were_added = self.reduce_matrix(qr_reduction = qr_reduction)
             i+=1
-    
+
         print("WE WIN")
         print("Basis - ")
         return self.reduce_groebner_basis()
@@ -300,7 +300,7 @@ class Groebner(object):
                 self._add_poly_to_matrix(p_a)
                 self._add_poly_to_matrix(p_b)
 
-      
+
     def phi_criterion(self,i,j,B,phi):
         # Need to run tests
         '''
@@ -321,7 +321,7 @@ class Groebner(object):
             return True
         # List of new and old polynomials.
         polys = self.new_polys+self.old_polys
-        #Always add these?, they are helping to reduce our basis.< I just ran some tests, the timing is about the same. 
+        #Always add these?, they are helping to reduce our basis.< I just ran some tests, the timing is about the same.
         #if all(polys[j].lead_term == self._lcm(polys[i],polys[j])) or all(polys[i].lead_term == self._lcm(polys[i],polys[j])) :
         #    return True
 
@@ -359,10 +359,10 @@ class Groebner(object):
                     return False
 
         # Function will return True and calculate phi if none of the checks passed for all l's.
-  
+
             return True
 
-        
+
     def _build_maxheap(self):
         '''
         Builds a maxheap for use in r polynomial calculation
@@ -476,7 +476,7 @@ class Groebner(object):
         Q,R,P = qr(A, pivoting = True) #rrqr reduce it
         PT = self.inverse_P(P)
         diagonals = np.diagonal(R) #Go along the diagonals to find the rank
-        rank = np.sum(np.abs(diagonals)>global_accuracy) 
+        rank = np.sum(np.abs(diagonals)>global_accuracy)
         if rank == height: #full rank, do qr on it
             Q,R = qr(A)
             A = R #qr reduce A

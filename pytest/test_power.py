@@ -190,3 +190,28 @@ def test_mon_mult():
         new_M3, new_M4 = M3, M4
 
     assert np.allclose(new_M3.coeff, new_M4.coeff)
+
+def test_evaluate_at():
+    # Evaluate .5xyz + 2x + y + z at (4,2,1)
+    poly = MultiPower(np.array([[[0,1,0],
+                                [1,0,0],
+                                [0,0,0]],
+                                [[2,0,0],
+                                [0,.5,0],
+                                [0,0,0]]]))
+
+    assert(poly.evaluate_at((4,2,1)) == 15)
+
+def test_evaluate_at2():
+    # Evaluate -.5x^2y + 2xy^2 - 3z^2 + yz at (7.4,2.33,.25)
+    poly = MultiPower(np.array([[[0,0,-3],
+                                [0,1,0],
+                                [0,0,0]],
+                                [[0,0,0],
+                                [0,0,0],
+                                [2,0,0]],
+                                [[0,0,0],
+                                [-.5,0,0],
+                                [0,0,0]]]))
+
+    assert(np.isclose(poly.evaluate_at((7.4, 2.33, .25)), 16.94732))
