@@ -58,7 +58,7 @@ def test_mon_mult():
     assert np.allclose(P1.coeff.all(), P2.coeff.all())
     assert np.allclose(T1.coeff.all(), T2.coeff.all())
 
-def test_mon_mult_random():
+    #test with random matrices
     possible_dim = np.random.randint(1,4, (1,10))
     dim = possible_dim[0, random.randint(1,9)]
     shape = list()
