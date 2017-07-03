@@ -63,7 +63,7 @@ class MultiPower(Polynomial):
         else:
             new_self, new_other = self, other
 
-        return MultiPower(fftconvolve(new_self.coeff, new_other.coeff))
+        return MultiPower(convolve(new_self.coeff, new_other.coeff))
 
     def match_size(self,a,b):
         '''

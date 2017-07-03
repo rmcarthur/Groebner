@@ -66,6 +66,7 @@ class MultiCheb(Polynomial):
         '''
         Matches the shape of the polynomials
         '''
+
         A_shape, B_shape = list(a.shape), list(b.shape)
         A, B = a.coeff, b.coeff
         if len(A_shape) != len(B_shape):
@@ -158,7 +159,7 @@ class MultiCheb(Polynomial):
 
         p2 = MultiCheb(p2)
         Pf = (p1+p2)
-        return MultiCheb(.5*Pf.coeff)
+        return MultiCheb((.5*Pf.coeff), clean_zeros = True)
         #TODO: You can use the lead_term kwarg to save some time
 
     def fold_in_i_dir(solution_matrix, dim, i, x, fold_idx):
