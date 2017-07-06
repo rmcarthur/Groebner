@@ -3,6 +3,7 @@ import numpy as np
 from scipy.signal import convolve, fftconvolve
 from polynomial import Polynomial
 import itertools
+import math
 
 """
 1/11/17
@@ -62,7 +63,7 @@ class MultiPower(Polynomial):
         else:
             new_self, new_other = self, other
 
-        return MultiPower(fftconvolve(new_self.coeff, new_other.coeff))
+        return MultiPower(convolve(new_self.coeff, new_other.coeff))
 
     def match_size(self,a,b):
         '''
@@ -126,3 +127,20 @@ class MultiPower(Polynomial):
             list1 = (i,0)
             tuple1.append(list1)
         return MultiPower(np.pad(self.coeff, tuple1, 'constant', constant_values = 0), clean_zeros = False)
+
+    def evaluate_at(self, point):
+        super(MultiPower, self).evaluate_at(point)
+
+        poly_value = 0
+        for mon in self.monomialList():
+            mon_value = 1
+            for i in range(len(point)):
+                var_value = pow(point[i], mon[i])
+                mon_value *= pow(point[i], mon[i])
+            mon_value *= self.coeff[mon]
+            poly_value += mon_value
+
+        if abs(poly_value) < 1.e-10:
+            return 0
+        else:
+            return poly_value

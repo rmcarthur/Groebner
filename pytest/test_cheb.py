@@ -58,7 +58,7 @@ def test_mon_mult():
     assert np.allclose(P1.coeff.all(), P2.coeff.all())
     assert np.allclose(T1.coeff.all(), T2.coeff.all())
 
-def test_mon_mult_random():
+    #test with random matrices
     possible_dim = np.random.randint(1,4, (1,10))
     dim = possible_dim[0, random.randint(1,9)]
     shape = list()
@@ -83,3 +83,16 @@ def test_mon_mult_random():
             M4 = M4 + MultiCheb.mon_mult(M1, index)
 
     assert np.allclose(M3.coeff, M4.coeff)
+
+def test_evaluate_at():
+    cheb = MultiCheb(np.array([[0,0,0,1],[0,0,0,0],[0,0,1,0]]))
+    value = cheb.evaluate_at((2,5))
+    assert(value == 828)
+
+    value = cheb.evaluate_at((.25,.5))
+    assert(np.isclose(value, -.5625))
+
+def test_evaluate_at2():
+    cheb = MultiCheb(np.array([[0,0,0,1],[0,0,0,0],[0,0,.5,0]]))
+    value = cheb.evaluate_at((2,5))
+    assert(np.isclose(value, 656.5))
