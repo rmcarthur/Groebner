@@ -16,7 +16,7 @@ from collections import defaultdict
 global_accuracy = 1.e-10
 #If clean is true then at a couple of places (end of rrqr_reduce and end of add r to matrix) things close to 0 will be made 0.
 #Might make it more stable, might make it less stable. Not sure.
-clean = True
+clean = False
 
 times = {} #Global dictionary to track the run times of each part of the code.
 
@@ -190,8 +190,8 @@ class Groebner(object):
             print("Starting Loop #"+str(i))
             print("Num Polys - ", len(self.new_polys + self.old_polys))
             self.initialize_np_matrix()
-            self.add_phi_to_matrix(phi = False)
-            #self.add_r_to_matrix()
+            self.add_phi_to_matrix()
+            self.add_r_to_matrix()
             self.create_matrix()
             print(self.np_matrix.shape)
             polys_were_added = self.reduce_matrix(qr_reduction = qr_reduction)
@@ -224,8 +224,6 @@ class Groebner(object):
             self.old_polys.append(poly)
         self.initialize_np_matrix(final_time = True)
         self.add_r_to_matrix()
-        if len(self.matrix_polys) ==0:
-            raise ValueError("No Polynomails in the Matrix!")
         self.create_matrix()
         self.reduce_matrix(triangular_solve = True)
         self.groebner_basis = self.old_polys
@@ -314,6 +312,7 @@ class Groebner(object):
                 poly = MultiCheb(coeff)
 
             if poly.lead_term != None:
+                #print(poly.coeff)
                 #poly.coeff = poly.coeff/poly.lead_coeff
                 p_list.append(poly)
         endTime = time.time()
@@ -692,7 +691,8 @@ class Groebner(object):
         height = matrix.shape[0]
         Q,R,P = qr(matrix, pivoting = True)
         diagonals = np.diagonal(R) #Go along the diagonals to find the rank
-        rank = np.sum(np.abs(diagonals)>global_accuracy/1.e2)
+        rank = np.sum(np.abs(diagonals)>global_accuracy)
+        #print(diagonals)
         numMissing = height - rank
         if numMissing == 0: #Full Rank. All rows independent
             return [i for i in range(height)],[],None
@@ -723,7 +723,7 @@ class Groebner(object):
             return False
     
     '''
-    def rrqr_reduce(self, matrix): #My new sort of working one
+    def rrqr_reduce(self, matrix): #My new sort of working one. Still appears to have some problems. Possibly from fullRank.
         if matrix.shape[0] <= 1 or matrix.shape[0]==1 or  matrix.shape[1]==0:
             return matrix
         height = matrix.shape[0]
@@ -836,7 +836,7 @@ class Groebner(object):
             return reduced_matrix
         else:
             return self.clean_zeros_from_matrix(reduced_matrix)
-       
+    
 
     def inverse_P(self,p):
         '''
