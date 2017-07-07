@@ -40,7 +40,7 @@ def roots(polys):
     dim = max(g.dim for g in GB)
 
     # Check for no solutions
-    if len(GB) == 1 and GB[0].coeff == 1:
+    if len(GB) == 1 and all([i==1 for i in GB[0].coeff.shape]):
         print("No solutions")
         return -1
 
@@ -56,8 +56,8 @@ def roots(polys):
 
     # Get multiplication matrix
     VB, var_dict = vectorSpaceBasis(GB)
-    print("VB:", VB)
-    print("var_dict:", var_dict)
+    #print("VB:", VB)
+    #print("var_dict:", var_dict)
     m_f = multMatrix(f, GB, VB)
 
     # Get list of indexes of single variables and store vars that were not
@@ -93,12 +93,12 @@ def roots(polys):
             if x != -1:
                 root[i] = v[x]/v[0]
         if vnib:
-            print("cur_root:", root)
+            #print("cur_root:", root)
             for pos in list(vars_not_in_basis.keys())[::-1]:
                 GB_poly = _get_poly_with_LT(vars_not_in_basis[pos], GB)
-                print("GB_poly:\n", GB_poly.coeff)
+                #print("GB_poly:\n", GB_poly.coeff)
                 var_value = GB_poly.evaluate_at(root) * -1
-                print("var_value:", var_value)
+                #print("var_value:", var_value)
                 root[pos] = var_value
         roots.append(root)
 
@@ -203,10 +203,10 @@ def coordinateVector(poly, GB, basis):
         The coordinate vector of the given polynomial's coset in
         A = C[x_1,...x_n]/I as a vector space over C
     '''
-    print("orig_poly:\n", poly.coeff)
+    #print("orig_poly:\n", poly.coeff)
     vectorSpaceDim = len(basis)
     poly = reduce_poly(poly, GB)
-    print("reduced_poly:\n", poly.coeff)
+    #print("reduced_poly:\n", poly.coeff)
 
     # reverse the array since self.vectorBasis is in increasing order
     # and monomialList() gives a list in decreasing order

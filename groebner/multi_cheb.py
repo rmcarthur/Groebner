@@ -60,6 +60,38 @@ class MultiCheb(Polynomial):
         """
         return self.coeff.flatten()[::-1].reshape(self.coeff.shape)
 
+    def fill_size(self,small):
+        '''
+        Takes a polynomial that we know is smaller in each dimensions and fills it to make it the same size as this one.
+        '''
+        if small.shape == self.shape:
+            return small
+        matrix = np.zeros_like(self.coeff) #Even though self.coeff is all zeros, use this because it makes a copy
+        if len(matrix.shape) == 2:
+            matrix[:small.coeff.shape[0],:small.coeff.shape[1]] = small.coeff
+        elif len(matrix.shape) == 3:
+            matrix[:small.coeff.shape[0],:small.coeff.shape[1],:small.coeff.shape[2]] = small.coeff
+        elif len(matrix.shape) == 4:
+            matrix[:small.coeff.shape[0],:small.coeff.shape[1],:small.coeff.shape[2],:small.coeff.shape[3]] = small.coeff
+        elif len(matrix.shape) == 1:
+            matrix[:small.coeff.shape[0]] = small.coeff
+        
+        #This is a bit slower, but I can't figure out how to generalize the above code to n dimensions. More elif statements might be the best way to go.
+        else:
+            if (np.prod(small.shape) * 7) < np.prod(self.shape): #Relitively not dense, this is faster
+                matrix = np.zeros_like(self.coeff) #Even though self.coeff is all zeros, use this because it makes a copy
+                matrix[np.where(small.coeff!=0)]= small.coeff[np.where(small.coeff!=0)]
+                return MultiCheb(matrix, clean_zeros = False) 
+            else: #Fairly dense
+                diff = tuple(np.array(self.coeff.shape)-np.array(small.shape))
+                padWidth = []
+                for i in diff:
+                    list1 = (0,i)
+                    padWidth.append(list1)
+                return MultiCheb(np.pad(small.coeff, padWidth, 'constant', constant_values = 0), clean_zeros = False)
+
+        return MultiCheb(matrix, clean_zeros = False)
+
 
     def match_size(self,a,b):
         '''
