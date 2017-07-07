@@ -63,7 +63,7 @@ class MultiPower(Polynomial):
         else:
             new_self, new_other = self, other
 
-        return MultiPower(fftconvolve(new_self.coeff, new_other.coeff))
+        return MultiPower(convolve(new_self.coeff, new_other.coeff))
 
     def fill_size(self,small):
         '''
@@ -161,27 +161,10 @@ class MultiPower(Polynomial):
         return MultiPower(np.pad(self.coeff, tuple1, 'constant', constant_values = 0), clean_zeros = False)
 
     def evaluate_at(self, point):
-        '''
-        Evaluates the polynomial at the given point.
-
-        parameters
-        ----------
-        point : tuple or list
-            the point at which to evaluate the polynomial
-
-        returns
-        -------
-        complex
-            value of the polynomial at the given point
-        '''
-        if len(point) != len(self.coeff.shape):
-            raise ValueError('Cannot evaluate polynomial in {} variables at point {}'\
-            .format(self.dim, point))
-
-        poly_monomials = self.monomialList()
+        super(MultiPower, self).evaluate_at(point)
 
         poly_value = 0
-        for mon in poly_monomials:
+        for mon in self.monomialList():
             mon_value = 1
             for i in range(len(point)):
                 var_value = pow(point[i], mon[i])

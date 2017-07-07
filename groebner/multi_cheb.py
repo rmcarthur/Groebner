@@ -2,6 +2,7 @@ import numpy as np
 from scipy.signal import fftconvolve, convolve
 import itertools
 from polynomial import Polynomial
+from numpy.polynomial import chebyshev as cheb
 
 """
 08/31/17
@@ -97,6 +98,7 @@ class MultiCheb(Polynomial):
         '''
         Matches the shape of the polynomials
         '''
+
         A_shape, B_shape = list(a.shape), list(b.shape)
         A, B = a.coeff, b.coeff
         if len(A_shape) != len(B_shape):
@@ -189,7 +191,7 @@ class MultiCheb(Polynomial):
 
         p2 = MultiCheb(p2)
         Pf = (p1+p2)
-        return MultiCheb(.5*Pf.coeff)
+        return MultiCheb((.5*Pf.coeff), clean_zeros = True)
         #TODO: You can use the lead_term kwarg to save some time
 
     def fold_in_i_dir(solution_matrix, dim, i, x, fold_idx):
@@ -275,3 +277,23 @@ class MultiCheb(Polynomial):
         p2 = MultiCheb(solution_matrix)
         Pf = (p1+p2)
         return MultiCheb(.5*Pf.coeff)
+
+    def evaluate_at(self, point):
+        super(MultiCheb, self).evaluate_at(point)
+
+        poly_value = complex(0)
+        for mon in self.monomialList():
+            mon_value = 1
+            for i in range(len(point)):
+                cheb_deg = mon[i]
+                cheb_coeff = [0. for i in range(cheb_deg)]
+                cheb_coeff.append(1.)
+                cheb_val = cheb.chebval([point[i]], cheb_coeff)[0]
+                mon_value *= cheb_val
+            mon_value *= self.coeff[mon]
+            poly_value += mon_value
+
+        if abs(poly_value) < 1.e-10:
+            return 0
+        else:
+            return poly_value

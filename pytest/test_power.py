@@ -38,7 +38,7 @@ def test_generator():
         elif(i == 2):
             assert (idx == [4., 3.]).all()
         elif(i == 3):
-        	assert (idx == [3., 4.]).all()
+            assert (idx == [3., 4.]).all()
         elif(i == 4):
             assert (idx == [4., 2.]).all()
         elif(i == 5):
@@ -60,7 +60,7 @@ def test_generator():
         elif(i == 13):
             assert (idx == [2., 2.]).all()
         elif(i == 14):
-        	assert (idx == [1., 3.]).all()
+            assert (idx == [1., 3.]).all()
         elif(i == 15):
             assert (idx == [0., 4.]).all()
         elif(i == 16):
@@ -92,7 +92,7 @@ def test_generator():
     for idx in gen:
         i += 1
         if(i == 1):
-        	assert (idx == [ 1.,  1.,  1.,  2.]).all()
+            assert (idx == [ 1.,  1.,  1.,  2.]).all()
         elif(i == 2):
             assert (idx == [ 1.,  1.,  1.,  1.]).all()
         elif(i == 3):
@@ -162,8 +162,10 @@ def test_mon_mult():
     assert np.allclose(T1.coeff.all(), T2.coeff.all(), atol = 1.0e-10)
 
 def test_mon_mult_random():
-    possible_dim = np.random.randint(1,5, (1,5))
-    dim = possible_dim[0, random.randint(1,4)]
+    #test with random matrices
+    possible_dim = np.random.randint(1,5, (1,10))
+    dim = possible_dim[0, random.randint(1,9)]
+
     shape = list()
     for i in range(dim):
         shape.append(random.randint(2,4))
