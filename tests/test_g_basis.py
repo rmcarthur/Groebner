@@ -1,17 +1,10 @@
 import numpy as np
 import os, sys
 from itertools import permutations
-
-if (os.name == 'nt'):
-    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('\\')[:-1]) + '/groebner')
-else:
-    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
-print(os.path.dirname(os.path.abspath(__file__)).split('\\'))
-
-import maxheap
-from multi_power import MultiPower
-from multi_cheb import MultiCheb
-import groebner_basis
+import groebner.maxheap as maxheap
+from groebner.multi_power import MultiPower
+from groebner.multi_cheb import MultiCheb
+import groebner.groebner_basis as groebner_basis
 import pytest
 from scipy.linalg import qr
 import sympy as sy

@@ -1,41 +1,43 @@
 import numpy as np
 import os, sys
-if (os.name == 'nt'):
-    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('\\')[:-1]) + '/groebner')
-else:
-    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
-from multi_cheb import MultiCheb
+#if (os.name == 'nt'):
+#    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('\\')[:-1]) + '/groebner')
+#else:
+#    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
+from groebner.multi_cheb import MultiCheb
 import pytest
 import pdb
 import random
 
 def test_add():
-    a1 = np.arange(27).reshape((3,3,3))
-    Test2 = MultiCheb(a1)
-    a2 = np.ones((3,3,3))
-    Test3 = MultiCheb(a2)
-    addTest = Test2 + Test3
-
-    assert addTest.coeff.all() == (Test2.coeff + Test3.coeff).all()
+    """Test Multivariate Chebyshev polynomial addition."""
+    t = np.arange(27).reshape((3,3,3))
+    poly1 = MultiCheb(t)
+    poly2 = MultiCheb(np.ones((3,3,3)))
+    S = poly1 + poly2 # the sum of the polynomials
+    result = (S.coeff == (poly1.coeff + poly2.coeff))
+    assert result.all()
 
 def test_mult():
+    """Test Multivariate Chebyshev polynomial multiplication."""
     test1 = np.array([[0,1],[2,1]])
     test2 = np.array([[2,2],[3,0]])
     cheb1 = MultiCheb(test1)
     cheb2 = MultiCheb(test2)
     new_cheb = cheb1*cheb2
     truth = MultiCheb(np.array([[4, 3.5, 1],[5,9,1],[3,1.5,0]]))
-    assert np.allclose(new_cheb.coeff.all() ,truth.coeff.all())
+    assert np.allclose(new_cheb.coeff, truth.coeff)
 
 def test_mult_diff():
     '''
+    Test Multivariate Chebyshev polynomial multiplication.
     Test implementation with different shape sizes
     '''
     c1 = MultiCheb(np.arange(0,4).reshape(2,2))
     c2 = MultiCheb(np.ones((2,1)))
     p = c1*c2
     truth = MultiCheb(np.array([[1,2.5,0],[2,4,0],[1,1.5,0]]))
-    assert np.allclose(p.coeff.all(),truth.coeff.all())
+    assert np.allclose(p.coeff,truth.coeff)
 
 def test_mon_mult():
     """
@@ -55,8 +57,8 @@ def test_mon_mult():
     T2 = MultiCheb.mon_mult(Poly2, mon2)
 
 
-    assert np.allclose(P1.coeff.all(), P2.coeff.all())
-    assert np.allclose(T1.coeff.all(), T2.coeff.all())
+    assert np.allclose(P1.coeff, P2.coeff)
+    assert np.allclose(T1.coeff, T2.coeff)
 
     #test with random matrices
     possible_dim = np.random.randint(1,4, (1,10))

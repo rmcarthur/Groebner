@@ -1,10 +1,6 @@
 import numpy as np
 import os,sys
-if (os.name == 'nt'):
-    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('\\')[:-1]) + '/groebner')
-else:
-    sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
-from multi_power import MultiPower
+from groebner.multi_power import MultiPower
 import pytest
 import random
 
@@ -15,7 +11,8 @@ def test_add():
     a2 = np.ones((3,3,3))
     Test3 = MultiPower(a2)
     addTest = Test2 + Test3
-    assert addTest.coeff.all() == (Test2.coeff + Test3.coeff).all()
+    result = addTest.coeff == (Test2.coeff + Test3.coeff)
+    assert result.all()
 
 def test_mult():
     test1 = np.array([[0,1],[2,1]])

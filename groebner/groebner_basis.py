@@ -1,13 +1,13 @@
 from operator import itemgetter
 import itertools
 import numpy as np
-import maxheap
+import groebner.maxheap as maxheap
 import os,sys
 import math
-from multi_cheb import MultiCheb
-from multi_power import MultiPower
+from groebner.multi_cheb import MultiCheb
+from groebner.multi_power import MultiPower
 from scipy.linalg import lu, qr, solve_triangular
-from maxheap import Term
+from groebner.maxheap import Term
 import matplotlib.pyplot as plt
 
 #What we determine to be zero throughout the code

@@ -1,10 +1,9 @@
 import numpy as np
 import os, sys
-sys.path.append('/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/groebner')
-import root_finder as rf
-from multi_power import MultiPower
-from multi_cheb import MultiCheb
-from groebner_class import Groebner
+import groebner.root_finder as rf
+from groebner.multi_power import MultiPower
+from groebner.multi_cheb import MultiCheb
+from groebner.groebner_class import Groebner
 import pytest
 import pdb
 

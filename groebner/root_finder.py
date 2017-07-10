@@ -1,8 +1,8 @@
 import numpy as np
-from multi_power import MultiPower
-from multi_cheb import MultiCheb
+from groebner.multi_power import MultiPower
+from groebner.multi_cheb import MultiCheb
 import itertools
-from groebner_class import Groebner
+from groebner.groebner_class import Groebner
 
 '''
 This module contains the tools necessary to find the points of the variety of the

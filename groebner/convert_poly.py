@@ -1,8 +1,8 @@
 import numpy as np
-from polynomial import Polynomial
+from groebner.polynomial import Polynomial
 from numpy.polynomial import chebyshev as C
-from multi_cheb import MultiCheb
-from multi_power import MultiPower
+from groebner.multi_cheb import MultiCheb
+from groebner.multi_power import MultiPower
 
 def conv_cheb(T):
     """
@@ -24,9 +24,10 @@ def conv_cheb(T):
 def conv_poly(P):
     """
     Convert a standard polynomial to a chebyshev polynomial in one dimension.
-    !!! Chebyshev polynomials of the first kind or second kind?
+
     Args:
         P (): The standard polynomial to be converted.
+
     Returns:
         new_conv (): The chebyshev polynomial.
 
@@ -53,8 +54,10 @@ def cheb2poly(T):
 def poly2cheb(P):
     """
     Convert a standard polynomial to a chebyshev polynomial in multiple dimensions.
+    
     Args:
         P (): The multi-dimensional standard polynomial. (tensor?)
+
     Returns:
         (MultiCheb): The multi-dimensional chebyshev polynomial.
 
