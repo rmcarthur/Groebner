@@ -158,8 +158,8 @@ def test_mon_mult():
     T2 = MultiPower.mon_mult(Poly2, mon2)
 
 
-    assert np.allclose(P1.coeff.all(), P2.coeff.all(), atol = 1.0)
-    assert np.allclose(T1.coeff.all(), T2.coeff.all(), atol = 1.0e-10)
+    assert np.allclose(P1.coeff, P2.coeff, atol = 1.0)
+    assert np.allclose(T1.coeff, T2.coeff, atol = 1.0e-10)
 
     #test with random matrices
     possible_dim = np.random.randint(1,5, (1,10))

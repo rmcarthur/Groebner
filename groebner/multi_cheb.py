@@ -213,7 +213,7 @@ class MultiCheb(Polynomial):
         return sol
 
 
-    def mon_mult(self,idx):
+    def mon_mult1(self,idx):
         """
         Takes a polynomial and the index of a monomial and returns the result of the multiplication.
         """
@@ -245,6 +245,13 @@ class MultiCheb(Polynomial):
         p2 = MultiCheb(solution_matrix)
         Pf = (p1+p2)
         return MultiCheb(.5*Pf.coeff)
+
+    def mon_mult(self, idx):
+        for i in range(len(idx)):
+            idx_zeros = np.zeros(len(idx),dtype = int)
+            idx_zeros[i] = idx[i]
+            self = self.mon_mult1(idx_zeros)
+        return self
 
     def evaluate_at(self, point):
         super(MultiCheb, self).evaluate_at(point)

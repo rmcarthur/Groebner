@@ -55,8 +55,8 @@ def test_mon_mult():
     T2 = MultiCheb.mon_mult(Poly2, mon2)
 
 
-    assert np.allclose(P1.coeff.all(), P2.coeff.all())
-    assert np.allclose(T1.coeff.all(), T2.coeff.all())
+    assert np.allclose(P1.coeff, P2.coeff)
+    assert np.allclose(T1.coeff, T2.coeff)
 
     #test with random matrices
     possible_dim = np.random.randint(1,4, (1,10))
