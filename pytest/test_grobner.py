@@ -28,11 +28,11 @@ def test_reduce_matrix():
     grob.term_set = set()
     grob.lead_term_set = set()
     grob._add_polys(grob.new_polys)
+    grob.create_matrix()
     
-    #This breaks becasue it hasn't been initialized.
-    #assert(grob.reduce_matrix())
+    assert(grob.reduce_matrix())
     #assert(len(grob.old_polys) == 2)
-    #assert(len(grob.new_polys) == 1)
+    assert(len(grob.new_polys) == 1)
 
     poly1 = MultiPower(np.array([[1., 0.],[0., 0.]]))
     poly2 = MultiPower(np.array([[0., 0.],[1., 0.]]))
@@ -44,11 +44,11 @@ def test_reduce_matrix():
     grob.term_set = set()
     grob.lead_term_set = set()
     grob._add_polys(grob.new_polys)
+    grob.create_matrix()
 
-    #This breaks becasue it hasn't been initialized.
-    #assert(not grob.reduce_matrix())
+    assert(not grob.reduce_matrix())
     #assert(len(grob.old_polys) == 3)
-    #assert(len(grob.new_polys) == 0)
+    assert(len(grob.new_polys) == 0)
 
     poly1 = MultiPower(np.array([[1., -14.],[0., 2.]]))
     poly2 = MultiPower(np.array([[0., 3.],[1., 6.]]))
@@ -59,7 +59,9 @@ def test_reduce_matrix():
     grob.np_matrix = np.array([])
     grob.term_set = set()
     grob.lead_term_set = set()
+    
     grob._add_polys(grob.new_polys)
+    grob.create_matrix()
     assert(grob.reduce_matrix())
     #assert(len(grob.old_polys) == 3)
     assert(len(grob.new_polys) == 2)
@@ -135,8 +137,7 @@ def test_solve():
     assert(X == x1[0])
     
     
-def test_phi_criterion():
-    
+def test_phi_criterion():    
     # Same as grob.solve(), but added true/false to test the phi's. 
     # *WARNING* MAKE SURE TO CHANGE solve_phi() test to match .solve method always! 
     def solve_phi(grob,phi=True):
@@ -144,19 +145,24 @@ def test_phi_criterion():
         i = 1
         while polys:
             print("Starting Loop #"+str(i))
-            print("Initializing")
             grob.initialize_np_matrix()
-            print(grob.np_matrix.shape)
-            print("ADDING PHI's")
-            grob.add_phi_to_matrix(False)
-            print(grob.np_matrix.shape)
-            print("ADDING r's")
+            grob.add_phi_to_matrix(phi)
             grob.add_r_to_matrix()
+            grob.create_matrix()
             print(grob2.np_matrix.shape)
             polys = grob.reduce_matrix()
             i+=1
-            print("WE WIN")
-        return grob.reduce_groebner_basis()    
+        print("WE WIN")
+        grob.get_groebner()
+        print("Basis - ")
+        
+        grob.reduce_groebner_basis()
+        
+        for poly in grob.groebner_basis:
+            print(poly.coeff)
+        
+        return grob.groebner_basis
+    
     
     # Simple Test Case (Nothing gets added )
     A = MultiPower(np.array([[-1,0,1],[0,0,0]]))
@@ -339,31 +345,73 @@ def test_init_():
     D = MultiCheb(np.array([[-1,0,0],[0,1,0],[1,0,0]]))
     with pytest.raises(ValueError):
         grob = Groebner([C,D])
-'''
- # Added to test timing: 
-def test_timing():
-    """Test the rrqr_reduce function. 
-    """
-    A = MultiPower(np.array([
-            [[[0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
-             [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]],
-             [[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
-              [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]]
-                                                                                                                                        ]))
-    B = MultiPower(np.array([
-            [[[0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
-            [[-1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]],
-            [[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
-            [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]]
-                                                                                                                                         ]
-                                                                                                           ))
-    C = MultiPower(np.array([
-            [[[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
-             [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]],
-            [[[-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]],
-             [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]]
-                                                                                  ]
-                                                                                                           ))
+    pass
+
+def test_sorted_polys_monomial():
+    A = MultiPower(np.array([[3,0,-5,0,0,4,2,-6,3,-6],
+                         [-2,0,-1,1,-1,4,2,-6,-5,-2],
+                         [-1,3,2,-2,0,4,-1,-2,-4,6],
+                         [4,2,5,9,0,3,2,-1,-3,-3],
+                         [3,-3,-5,-2,0,4,-2,2,1,-6]]))
+    grob = Groebner([A])
+    x = grob.sorted_polys_monomial([A])
+    assert(A == x[0])
+    
+    B = MultiPower(np.array([[2,0,-3,0,0],
+                         [0,1,0,0,0],
+                         [-2,0,0,0,0],
+                         [0,0,4,0,0],
+                         [0,0,0,0,-2]]))
+    assert(list((B,A)) == grob.sorted_polys_monomial([B,A]))
+    
+    C = MultiPower(np.array([[0,0,-3,0,0],
+                         [0,0,0,0,0],
+                         [0,0,0,0,0],
+                         [0,0,4,0,0],
+                         [0,0,0,0,-2]]))
+    assert(list((C,B,A)) == grob.sorted_polys_monomial([A,B,C]))
+    
+    
+    D = MultiPower(np.array([[2,0,-3,0,0],
+                         [0,1,0,0,0],
+                         [-2,0,2,0,0],
+                         [0,0,4,0,0],
+                         [0,0,0,0,-2]]))
+    assert(list((C,B,D,A)) == grob.sorted_polys_monomial([B,D,C,A]))
+    
+    E = MultiPower(np.array([[3,0,-5,0,0,4,2,-6,3,-6],
+                         [-2,0,-1,1,-1,4,2,-6,-5,-2],
+                         [-1,3,2,-2,0,4,-1,-2,-4,6],
+                         [4,2,5,9,0,3,2,-1,-3,-3],
+                         [3,-3,-5,-2,2,4,-2,2,1,-6]]))
+    assert(list((C,B,D,A,E)) == grob.sorted_polys_monomial([B,D,E,C,A]))
+    
+    F = MultiPower(np.array([[3,0,-5,0,0,0,2,-6,3,-6],
+                         [-2,0,-1,1,-1,4,2,-6,-5,-2],
+                         [-1,3,2,-2,0,4,-1,-2,-4,6],
+                         [4,2,5,9,0,3,2,-1,-3,-3],
+                         [3,-3,-5,-2,0,4,-2,2,1,-6]]))
+    assert(list((C,B,D,F,A,E)) == grob.sorted_polys_monomial([F,B,D,E,C,A]))
+    pass
+
+def test_sorted_polys_coeff():
+    A = MultiPower(np.array([[2,0,-3,0,0],
+                         [0,1,0,0,0],
+                         [-2,0,0,0,0],
+                         [0,0,4,0,0],
+                         [0,0,0,0,-2]]))
+    B = MultiPower(np.array([[3,0,-5,0,0,4,2,-6,3,-6],
+                         [-2,0,-1,1,-1,4,2,-6,-5,-2],
+                         [-1,3,2,-2,0,4,-1,-2,-4,6],
+                         [4,2,5,9,0,3,2,-1,-3,-3],
+                         [3,-3,-5,-2,0,4,-2,2,1,-6]]))
     grob = Groebner([A,B])
-    grob.solve()
-'''  
+    assert(list((B,A)) == grob.sorted_polys_coeff())
+    
+    C = MultiPower(np.array([[1]]))
+    grob = Groebner([A,B,C])
+    assert(list((B,A,C)) == grob.sorted_polys_coeff())
+
+    
+    
+    

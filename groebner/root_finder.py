@@ -40,7 +40,7 @@ def roots(polys):
     dim = max(g.dim for g in GB) # dimension of the polynomials
 
     # Check for no solutions
-    if len(GB) == 1 and GB[0].coeff.shape == (1):
+    if len(GB) == 1 and all([i==1 for i in GB[0].coeff.shape]):
         print("No solutions")
         return -1
 
@@ -52,8 +52,8 @@ def roots(polys):
 
     # Get multiplication matrix
     VB, var_dict = vectorSpaceBasis(GB)
-    print("VB:", VB)
-    print("var_dict:", var_dict)
+    #print("VB:", VB)
+    #print("var_dict:", var_dict)
     m_f = multMatrix(f, GB, VB)
 
     # Get list of indexes of single variables and store vars that were not
