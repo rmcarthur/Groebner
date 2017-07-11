@@ -1,5 +1,4 @@
 import numpy as np
-import os, sys
 from groebner.multi_cheb import MultiCheb
 import pytest
 import pdb
@@ -94,3 +93,4 @@ def test_evaluate_at2():
     cheb = MultiCheb(np.array([[0,0,0,1],[0,0,0,0],[0,0,.5,0]]))
     value = cheb.evaluate_at((2,5))
     assert(np.isclose(value, 656.5))
+

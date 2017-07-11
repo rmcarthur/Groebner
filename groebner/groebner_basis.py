@@ -2,7 +2,6 @@ from operator import itemgetter
 import itertools
 import numpy as np
 import groebner.maxheap as maxheap
-import os,sys
 import math
 from groebner.multi_cheb import MultiCheb
 from groebner.multi_power import MultiPower
