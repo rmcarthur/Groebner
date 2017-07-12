@@ -4,13 +4,13 @@ import itertools
 from groebner.polynomial import Polynomial
 from numpy.polynomial import chebyshev as cheb
 
-"""
+'''
 08/31/17
 Author: Rex McArthur
 Creates a class of n-dim chebyshev polynomials. Tracks leading term,
 coefficents, and inculdes basic operations (+,*,scalar multip, etc.)
 Assumes GRevLex ordering, but should be extended.
-"""
+'''
 
 
 class MultiCheb(Polynomial):
@@ -60,7 +60,6 @@ class MultiCheb(Polynomial):
         Reverse the axes of the coeff tensor.
         """
         return self.coeff.flatten()[::-1].reshape(self.coeff.shape)
-
 
     def match_size(self,a,b):
         '''
@@ -212,11 +211,25 @@ class MultiCheb(Polynomial):
 
         return sol
 
+    def mon_mult(self, idx):
+        for i in range(len(idx)):
+            idx_zeros = np.zeros(len(idx),dtype = int)
+            idx_zeros[i] = idx[i]
+            self = self.mon_mult1(idx_zeros)
+        return self
 
-    def mon_mult(self,idx):
+    def mon_mult1(self,idx):
         """
         Takes a polynomial and the index of a monomial and returns the result of the multiplication.
         """
+        #This is the cheating convert to power way.
+        #power = cheb2poly(self)
+        #mult = power.mon_mult(idx)
+        #return poly2cheb(mult)
+        
+        
+        
+        
         pad_values = list()
         for i in idx: #iterates through monomial and creates a tuple of pad values for each dimension
             pad_dim_i = (i,0)
@@ -244,7 +257,7 @@ class MultiCheb(Polynomial):
 
         p2 = MultiCheb(solution_matrix)
         Pf = (p1+p2)
-        return MultiCheb(.5*Pf.coeff)
+        return MultiCheb(.5*Pf.coeff) #Make
 
     def evaluate_at(self, point):
         super(MultiCheb, self).evaluate_at(point)

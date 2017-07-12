@@ -72,13 +72,19 @@ def test_mon_mult():
     M2 = MultiCheb(matrix2)
 
     M3 = M1*M2
+    M3 = MultiCheb(M3.coeff)
 
     for index, i in np.ndenumerate(M2.coeff):
         if sum(index) == 0:
             M4 = MultiCheb.mon_mult(M1, index)
         else:
             M4 = M4 + MultiCheb.mon_mult(M1, index)
-
+    
+    M4 = MultiCheb(M4.coeff)
+    #print(M3.coeff.shape,M4.coeff.shape)
+    #print(M3.coeff)
+    #print(M4.coeff)
+    
     assert np.allclose(M3.coeff, M4.coeff)
 
 def test_evaluate_at():

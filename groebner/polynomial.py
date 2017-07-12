@@ -36,14 +36,14 @@ class Polynomial(object):
             while not change:
                 temp = np.delete(self.coeff,-1,axis=axis)
                 sum_temp = np.sum(abs(temp))
-                if abs(sum_temp - sum_values) < 1.e-10:
+                if abs(sum_temp - sum_values) < 1.e-15:
                     self.coeff = temp
                 else:
                     change = True
                 pass
             pass
         pass
-
+    """
     def check_column_overload(self, max_values, current, column):
         '''
         Checks to make sure that we aren't going into the negatives, aka the current value can't ever be greater
@@ -152,7 +152,8 @@ class Polynomial(object):
                             #print("Current - ",current)
                             yield base-current
             return
-
+    
+    """
     def monomialList(self):
         '''
         return
@@ -160,14 +161,22 @@ class Polynomial(object):
         monomials : list of tuples
             list of monomials that make up the polynomial in degrevlex order
         '''
-        monomials = []
-        gen = self.degrevlex_gen()
-        for index in gen:
-            index = tuple(map(lambda i: int(i), index))
-            if (self.coeff[index] != 0):
-                monomials.append(index)
+        monomialTerms = list()
+        for i in zip(*np.where(self.coeff != 0)):
+            monomialTerms.append(Term(i))
+        monomialTerms.sort()
+        
+        monomials = list()
+        for i in monomialTerms[::-1]:
+            monomials.append(i.val)
+        
+        #gen = self.degrevlex_gen()
+        #for index in gen:
+        #    index = tuple(map(lambda i: int(i), index))
+        #    if (self.coeff[index] != 0):
+        #        monomials.append(index)
         return monomials
-
+    
     def update_lead_term(self,start = None):
         found = False
 
@@ -181,7 +190,7 @@ class Polynomial(object):
             self.lead_term = None
             self.lead_coeff = 0
 
-        """ THE GENERATOR IS BROKEN RIGHT NOW. UNTIL FIXED USE THIS NEW, ALTHOUGH PROSSIBLY SLOWER CODE.
+        """ THE GENERATOR IS BROKEN RIGHT NOW. UNTIL FIXED USE THIS NEW, ALTHOUGH POSSIBLY SLOWER CODE.
         if self.order == 'degrevlex':
             gen = self.degrevlex_gen()
             for idx in gen:
