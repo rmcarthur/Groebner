@@ -4,13 +4,13 @@ import itertools
 from polynomial import Polynomial
 from numpy.polynomial import chebyshev as cheb
 
-"""
+'''
 08/31/17
 Author: Rex McArthur
 Creates a class of n-dim chebyshev polynomials. Tracks leading term,
 coefficents, and inculdes basic operations (+,*,scalar multip, etc.)
 Assumes GRevLex ordering, but should be extended.
-"""
+'''
 
 
 class MultiCheb(Polynomial):
@@ -60,39 +60,6 @@ class MultiCheb(Polynomial):
         Reverse the axes of the coeff tensor.
         """
         return self.coeff.flatten()[::-1].reshape(self.coeff.shape)
-
-    def fill_size(self,small):
-        '''
-        Takes a polynomial that we know is smaller in each dimensions and fills it to make it the same size as this one.
-        '''
-        if small.shape == self.shape:
-            return small
-        matrix = np.zeros_like(self.coeff) #Even though self.coeff is all zeros, use this because it makes a copy
-        if len(matrix.shape) == 2:
-            matrix[:small.coeff.shape[0],:small.coeff.shape[1]] = small.coeff
-        elif len(matrix.shape) == 3:
-            matrix[:small.coeff.shape[0],:small.coeff.shape[1],:small.coeff.shape[2]] = small.coeff
-        elif len(matrix.shape) == 4:
-            matrix[:small.coeff.shape[0],:small.coeff.shape[1],:small.coeff.shape[2],:small.coeff.shape[3]] = small.coeff
-        elif len(matrix.shape) == 1:
-            matrix[:small.coeff.shape[0]] = small.coeff
-        
-        #This is a bit slower, but I can't figure out how to generalize the above code to n dimensions. More elif statements might be the best way to go.
-        else:
-            if (np.prod(small.shape) * 7) < np.prod(self.shape): #Relitively not dense, this is faster
-                matrix = np.zeros_like(self.coeff) #Even though self.coeff is all zeros, use this because it makes a copy
-                matrix[np.where(small.coeff!=0)]= small.coeff[np.where(small.coeff!=0)]
-                return MultiCheb(matrix, clean_zeros = False) 
-            else: #Fairly dense
-                diff = tuple(np.array(self.coeff.shape)-np.array(small.shape))
-                padWidth = []
-                for i in diff:
-                    list1 = (0,i)
-                    padWidth.append(list1)
-                return MultiCheb(np.pad(small.coeff, padWidth, 'constant', constant_values = 0), clean_zeros = False)
-
-        return MultiCheb(matrix, clean_zeros = False)
-
 
     def match_size(self,a,b):
         '''
@@ -244,11 +211,25 @@ class MultiCheb(Polynomial):
 
         return sol
 
+    def mon_mult(self, idx):
+        for i in range(len(idx)):
+            idx_zeros = np.zeros(len(idx),dtype = int)
+            idx_zeros[i] = idx[i]
+            self = self.mon_mult1(idx_zeros)
+        return self
 
-    def mon_mult(self,idx):
+    def mon_mult1(self,idx):
         """
         Takes a polynomial and the index of a monomial and returns the result of the multiplication.
         """
+        #This is the cheating convert to power way.
+        #power = cheb2poly(self)
+        #mult = power.mon_mult(idx)
+        #return poly2cheb(mult)
+        
+        
+        
+        
         pad_values = list()
         for i in idx: #iterates through monomial and creates a tuple of pad values for each dimension
             pad_dim_i = (i,0)
@@ -276,7 +257,7 @@ class MultiCheb(Polynomial):
 
         p2 = MultiCheb(solution_matrix)
         Pf = (p1+p2)
-        return MultiCheb(.5*Pf.coeff)
+        return MultiCheb(.5*Pf.coeff) #Make
 
     def evaluate_at(self, point):
         super(MultiCheb, self).evaluate_at(point)

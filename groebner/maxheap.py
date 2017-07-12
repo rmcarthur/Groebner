@@ -11,21 +11,42 @@ class Term(object):
     def __repr__(self):
         return str(self.val) + ' with grevlex order'
 
-    def __lt__(self, other):
+    def __lt__(self, other, order = 'grevlex'):
         '''
         Redfine less-than according to grevlex
         '''
-        if sum(self.val) < sum(other.val):
-            return True
-        elif sum(self.val) > sum(other.val):
-            return False
-        else:
-            for i,j in zip(reversed(self.val),reversed(other.val)):
+        if order == 'grevlex': #Graded Reverse Lexographical Order
+            if sum(self.val) < sum(other.val):
+                return True
+            elif sum(self.val) > sum(other.val):
+                return False
+            else:
+                for i,j in zip(reversed(self.val),reversed(other.val)):
+                    if i<j:
+                        return False
+                    if i > j:
+                        return True
+                return False
+        elif order == 'lexographic': #Lexographical Order
+            for i,j in zip(self.val,other.val):
                 if i<j:
-                    return False
-                if i > j:
                     return True
+                if i>j:
+                    return False
             return False
+        elif order == 'grlex': #Graded Lexographical Order
+            if sum(self.val) < sum(other.val):
+                return True
+            elif sum(self.val) > sum(other.val):
+                return False
+            else:
+                for i,j in zip(self.val,other.val):
+                    if i<j:
+                        return True
+                    if i > j:
+                        return False
+                return False
+
 
     # Define the other relations in grevlex order   
         

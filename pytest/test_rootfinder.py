@@ -195,7 +195,7 @@ def testRoots_2():
                     [f2.evaluate_at(root) for root in roots],
                     [f3.evaluate_at(root) for root in roots]])
 
-    assert(np.all(values_at_roots==0))
+    assert(np.all(abs(values_at_roots)<1.e-5))
 
 def testRoots_3():
     # roots of [x^2-y, x^3-y+1]
