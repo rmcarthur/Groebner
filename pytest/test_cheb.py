@@ -25,7 +25,7 @@ def test_mult():
     cheb2 = MultiCheb(test2)
     new_cheb = cheb1*cheb2
     truth = MultiCheb(np.array([[4, 3.5, 1],[5,9,1],[3,1.5,0]]))
-    assert np.allclose(new_cheb.coeff.all() ,truth.coeff.all())
+    assert np.allclose(new_cheb.coeff ,truth.coeff)
 
 def test_mult_diff():
     '''
@@ -35,7 +35,7 @@ def test_mult_diff():
     c2 = MultiCheb(np.ones((2,1)))
     p = c1*c2
     truth = MultiCheb(np.array([[1,2.5,0],[2,4,0],[1,1.5,0]]))
-    assert np.allclose(p.coeff.all(),truth.coeff.all())
+    assert np.allclose(p.coeff,truth.coeff)
 
 def test_mon_mult():
     """
@@ -55,8 +55,8 @@ def test_mon_mult():
     T2 = MultiCheb.mon_mult(Poly2, mon2)
 
 
-    assert np.allclose(P1.coeff.all(), P2.coeff.all())
-    assert np.allclose(T1.coeff.all(), T2.coeff.all())
+    assert np.allclose(P1.coeff, P2.coeff)
+    assert np.allclose(T1.coeff, T2.coeff)
 
     #test with random matrices
     possible_dim = np.random.randint(1,4, (1,10))
@@ -75,13 +75,19 @@ def test_mon_mult():
     M2 = MultiCheb(matrix2)
 
     M3 = M1*M2
+    M3 = MultiCheb(M3.coeff)
 
     for index, i in np.ndenumerate(M2.coeff):
         if sum(index) == 0:
             M4 = MultiCheb.mon_mult(M1, index)
         else:
             M4 = M4 + MultiCheb.mon_mult(M1, index)
-
+    
+    M4 = MultiCheb(M4.coeff)
+    #print(M3.coeff.shape,M4.coeff.shape)
+    #print(M3.coeff)
+    #print(M4.coeff)
+    
     assert np.allclose(M3.coeff, M4.coeff)
 
 def test_evaluate_at():

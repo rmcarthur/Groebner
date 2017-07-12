@@ -15,7 +15,7 @@ def test_add():
     a2 = np.ones((3,3,3))
     Test3 = MultiPower(a2)
     addTest = Test2 + Test3
-    assert addTest.coeff.all() == (Test2.coeff + Test3.coeff).all()
+    assert (addTest.coeff == (Test2.coeff + Test3.coeff)).all()
 
 def test_mult():
     test1 = np.array([[0,1],[2,1]])
@@ -158,8 +158,8 @@ def test_mon_mult():
     T2 = MultiPower.mon_mult(Poly2, mon2)
 
 
-    assert np.allclose(P1.coeff.all(), P2.coeff.all(), atol = 1.0e-10)
-    assert np.allclose(T1.coeff.all(), T2.coeff.all(), atol = 1.0e-10)
+    assert np.allclose(P1.coeff, P2.coeff, atol = 1.0e-10)
+    assert np.allclose(T1.coeff, T2.coeff, atol = 1.0e-10)
 
 def test_mon_mult_random():
     #test with random matrices
