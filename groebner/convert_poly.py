@@ -1,10 +1,18 @@
 import numpy as np
-from polynomial import Polynomial
+from groebner.polynomial import Polynomial
 from numpy.polynomial import chebyshev as C
-from multi_cheb import MultiCheb
-from multi_power import MultiPower
+from groebner.multi_cheb import MultiCheb
+from groebner.multi_power import MultiPower
 
 def conv_cheb(T):
+    """
+    Convert a chebyshev polynomial to the power basis representation.
+    Args:
+        T (): The chebyshev polynomial to convert.
+    Returns:
+        new_conv (): The chebyshev polynomial converted to the power basis representation.
+
+    """
     conv = C.cheb2poly(T)
     if conv.size == T.size:
         return conv
@@ -14,6 +22,16 @@ def conv_cheb(T):
         return new_conv
 
 def conv_poly(P):
+    """
+    Convert a standard polynomial to a chebyshev polynomial in one dimension.
+
+    Args:
+        P (): The standard polynomial to be converted.
+
+    Returns:
+        new_conv (): The chebyshev polynomial.
+
+    """
     conv = C.poly2cheb(P)
     if conv.size == P.size:
         return conv
@@ -23,6 +41,10 @@ def conv_poly(P):
         return new_conv
 
 def cheb2poly(T):
+    """
+    Convert a chebyshev polynomial to a standard polynomial in multiple dimensions.
+
+    """
     dim = len(T.shape)
     A = T.coeff
     for i in range(dim):
@@ -30,6 +52,16 @@ def cheb2poly(T):
     return MultiPower(A)
 
 def poly2cheb(P):
+    """
+    Convert a standard polynomial to a chebyshev polynomial in multiple dimensions.
+    
+    Args:
+        P (): The multi-dimensional standard polynomial. (tensor?)
+
+    Returns:
+        (MultiCheb): The multi-dimensional chebyshev polynomial.
+
+    """
     dim = len(P.shape)
     A = P.coeff
     for i in range(dim):

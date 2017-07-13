@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.signal import fftconvolve, convolve
 import itertools
-from polynomial import Polynomial
+from groebner.polynomial import Polynomial
 from numpy.polynomial import chebyshev as cheb
 
 '''
