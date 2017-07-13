@@ -76,13 +76,13 @@ class MultiCheb(Polynomial):
             matrix[:small.coeff.shape[0],:small.coeff.shape[1],:small.coeff.shape[2],:small.coeff.shape[3]] = small.coeff
         elif len(matrix.shape) == 1:
             matrix[:small.coeff.shape[0]] = small.coeff
-        
+
         #This is a bit slower, but I can't figure out how to generalize the above code to n dimensions. More elif statements might be the best way to go.
         else:
             if (np.prod(small.shape) * 7) < np.prod(self.shape): #Relitively not dense, this is faster
                 matrix = np.zeros_like(self.coeff) #Even though self.coeff is all zeros, use this because it makes a copy
                 matrix[np.where(small.coeff!=0)]= small.coeff[np.where(small.coeff!=0)]
-                return MultiCheb(matrix, clean_zeros = False) 
+                return MultiCheb(matrix, clean_zeros = False)
             else: #Fairly dense
                 diff = tuple(np.array(self.coeff.shape)-np.array(small.shape))
                 padWidth = []
@@ -203,6 +203,9 @@ class MultiCheb(Polynomial):
         x is the size of the solution matrix in the dimension being folded
         fold_idx is the index to fold around.
         """
+        if fold_idx == 0:
+            return solution_matrix
+
         sol = np.zeros_like(solution_matrix) #Matrix of zeroes used to insert the new values..
         slice_0 = slice(None, 1, None) # index to take first slice
         slice_1 = slice(fold_idx, fold_idx+1, None) # index to take slice that contains the axis folding around.
