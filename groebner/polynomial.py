@@ -2,7 +2,7 @@ from __future__ import division, print_function
 import numpy as np
 from scipy.signal import fftconvolve, convolve
 import itertools
-from maxheap import Term
+from groebner.maxheap import Term
 
 class Polynomial(object):
     def __init__(self, coeff, order='degrevlex', lead_term=None, clean_zeros = True):
@@ -190,7 +190,7 @@ class Polynomial(object):
             self.lead_term = None
             self.lead_coeff = 0
 
-        """ THE GENERATOR IS BROKEN RIGHT NOW. UNTIL FIXED USE THIS NEW, ALTHOUGH PROSSIBLY SLOWER CODE.
+        """ THE GENERATOR IS BROKEN RIGHT NOW. UNTIL FIXED USE THIS NEW, ALTHOUGH POSSIBLY SLOWER CODE.
         if self.order == 'degrevlex':
             gen = self.degrevlex_gen()
             for idx in gen:
