@@ -1,13 +1,12 @@
 from operator import itemgetter
 import itertools
 import numpy as np
-import maxheap
-import os,sys
+import groebner.maxheap as maxheap
 import math
-from multi_cheb import MultiCheb
-from multi_power import MultiPower
+from groebner.multi_cheb import MultiCheb
+from groebner.multi_power import MultiPower
 from scipy.linalg import lu, qr, solve_triangular
-from maxheap import Term
+from groebner.maxheap import Term
 import matplotlib.pyplot as plt
 
 #What we determine to be zero throughout the code
@@ -19,13 +18,13 @@ clean = False
 
 '''
  * They are currently saved into a dictionary called items that is passed in and out of most functions.* 
-    variables: 
-        polys -- a list of polynomials that generate your ideal
-        old_polys - The polynomials that have already gone through the solve loop once. Starts as none.
-        new_polys - New polynomials that have never been throught the solve loop. All of them at first.
-        np_matrix - The full matrix of polynomials.
-        term_set - The set of monomials in the matrix. Contains Terms.
-        lead_term_set - The set of monomials that are lead terms of some polynomial in the matrix. Contains Terms.
+    Args: 
+        polys (list): A list of polynomials that generate the ideal.
+        old_polys (list): The polynomials that have already gone through the solve loop once. Starts as [].
+        new_polys (list): New polynomials that have never been throught the solve loop. All of them at first.
+        np_matrix (numpy.ndarray): The full matrix of polynomials.
+        term_set (set): The set of monomials in the matrix. Contains Terms.
+        lead_term_set (set): The set of monomials that are lead terms of some polynomial in the matrix. Contains Terms.
         
         These next three are used to determine what polynomials to keep after reduction.
         original_lms - The leading Terms of the original polynomials (not phi's or r's). Keep these as old_polys.
@@ -39,6 +38,11 @@ def solve(polys,qr_reduction = True):
     '''
     The main function. Initializes the matrix, adds the phi's and r's, and then reduces it. Repeats until the reduction
     no longer adds any more polynomials to the matrix. Print statements let us see the progress of the code.
+    
+    Args:
+        polys ():
+    Keyword Args:
+        qr_reduction=True: 
     '''
     # A dictionary that will keep track of variables (previously saved as attributes). 
     items = {}

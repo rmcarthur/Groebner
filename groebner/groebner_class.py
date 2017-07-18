@@ -1,13 +1,12 @@
 from operator import itemgetter
 import itertools
 import numpy as np
-import maxheap
-import os,sys
+from groebner import maxheap
 import math
-from multi_cheb import MultiCheb
-from multi_power import MultiPower
-from scipy.linalg import lu, qr, solve_triangular, solve, det
-from maxheap import Term
+from groebner.multi_cheb import MultiCheb
+from groebner.multi_power import MultiPower
+from scipy.linalg import lu, qr, solve_triangular
+from groebner.maxheap import Term
 import matplotlib.pyplot as plt
 import time
 from collections import defaultdict
@@ -717,7 +716,7 @@ class Groebner(object):
             #plt.matshow(reduced_matrix)
             
             #plt.matshow([i==0 for i in reduced_matrix])
-            #plt.matshow([abs(i)<global_accuracy for i in reduced_matrix])
+            #plt.matshow([abs(i)<self.global_accuracy for i in reduced_matrix])
         else:
             #This thing is very behind the times.
             P,L,U = lu(self.np_matrix)
@@ -878,6 +877,7 @@ class Groebner(object):
     '''
         
     def rrqr_reduce(self, matrix): #Original One. Seems to be the more stable one from testing.
+>>>>>>> 2c0dafc0c4662dc4ac4c0114d8ca92e2c0ecaef1
         if matrix.shape[0]==0 or matrix.shape[1]==0:
             return matrix
         if clean:
@@ -891,20 +891,24 @@ class Groebner(object):
         times["matrixStuff"] += (endMatrix - startMatrix)        
         PT = self.inverse_P(P)
         diagonals = np.diagonal(R) #Go along the diagonals to find the rank
+<<<<<<< HEAD
+        rank = np.sum(np.abs(diagonals)>self.global_accuracy)
+=======
         rank = np.sum(np.abs(diagonals)>global_accuracy)
         if clean:
             R = self.clean_zeros_from_matrix(R)
 
+>>>>>>> 2c0dafc0c4662dc4ac4c0114d8ca92e2c0ecaef1
         if rank == height: #full rank, do qr on it
             startMatrix = time.time()
             Q,R = qr(A)
             endMatrix = time.time()
             times["matrixStuff"] += (endMatrix - startMatrix)
             A = R #qr reduce A
-            B = Q.T@B #Transform B the same way
+            B = Q.T.dot(B) #Transform B the same way
         else: #not full rank
             A = R[:,PT] #Switch the columns back
-            B = Q.T@B #Multiply B by Q transpose
+            B = Q.T.dot(B) #Multiply B by Q transpose
             #sub1 is the top part of the matrix, we will recursively reduce this
             #sub2 is the bottom part of A, we will set this all to 0
             #sub3 is the bottom part of B, we will recursively reduce this.
