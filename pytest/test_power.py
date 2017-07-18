@@ -157,9 +157,11 @@ def test_mon_mult():
     T1 = mon_matr2*Poly2
     T2 = MultiPower.mon_mult(Poly2, mon2)
 
+    assert(P1 == P2)
+    assert(T1 == T2)
 
-    assert np.allclose(P1.coeff, P2.coeff, atol = 1.0e-10)
-    assert np.allclose(T1.coeff, T2.coeff, atol = 1.0e-10)
+    #assert np.allclose(P1.coeff, P2.coeff, atol = 1.0e-10)
+    #assert np.allclose(T1.coeff, T2.coeff, atol = 1.0e-10)
 
 def test_mon_mult_random():
     #test with random matrices
