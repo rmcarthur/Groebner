@@ -158,7 +158,7 @@ class Polynomial(object):
                             #print("Current - ",current)
                             yield base-current
             return
-    
+
     """
     def monomialList(self):
         '''
@@ -171,18 +171,18 @@ class Polynomial(object):
         for i in zip(*np.where(self.coeff != 0)):
             monomialTerms.append(Term(i))
         monomialTerms.sort()
-        
+
         monomials = list()
         for i in monomialTerms[::-1]:
             monomials.append(i.val)
-        
+
         #gen = self.degrevlex_gen()
         #for index in gen:
         #    index = tuple(map(lambda i: int(i), index))
         #    if (self.coeff[index] != 0):
         #        monomials.append(index)
         return monomials
-    
+
     def update_lead_term(self,start = None):
         found = False
 
@@ -191,6 +191,7 @@ class Polynomial(object):
             non_zeros.add(Term(i))
         if len(non_zeros) != 0:
             self.lead_term = max(non_zeros).val
+            self.degree = sum(self.lead_term)
             self.lead_coeff = self.coeff[tuple(self.lead_term)]
         else:
             self.lead_term = None

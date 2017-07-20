@@ -179,6 +179,9 @@ class MultiCheb(Polynomial):
         x is the size of the solution matrix in the dimension being folded
         fold_idx is the index to fold around.
         """
+        if fold_idx == 0:
+            return solution_matrix
+
         sol = np.zeros_like(solution_matrix) #Matrix of zeroes used to insert the new values..
         slice_0 = slice(None, 1, None) # index to take first slice
         slice_1 = slice(fold_idx, fold_idx+1, None) # index to take slice that contains the axis folding around.
@@ -239,10 +242,10 @@ class MultiCheb(Polynomial):
         #power = cheb2poly(self)
         #mult = power.mon_mult(idx)
         #return poly2cheb(mult)
-        
-        
-        
-        
+
+
+
+
         pad_values = list()
         for i in idx: #iterates through monomial and creates a tuple of pad values for each dimension
             pad_dim_i = (i,0)
@@ -271,6 +274,13 @@ class MultiCheb(Polynomial):
         p2 = MultiCheb(solution_matrix)
         Pf = (p1+p2)
         return MultiCheb(.5*Pf.coeff) #Make
+
+    def mon_mult(self, idx):
+        for i in range(len(idx)):
+            idx_zeros = np.zeros(len(idx),dtype = int)
+            idx_zeros[i] = idx[i]
+            self = self.mon_mult1(idx_zeros)
+        return self
 
     def evaluate_at(self, point):
         super(MultiCheb, self).evaluate_at(point)
