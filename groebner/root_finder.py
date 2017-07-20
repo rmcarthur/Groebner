@@ -156,7 +156,7 @@ def vectorSpaceBasis(GB):
         maps each variable to its position in the vector space basis
     '''
     LT_G = [f.lead_term for f in GB]
-    print("LT_G:", LT_G)
+    #print("LT_G:", LT_G)
     possibleVarDegrees = [range(max(tup)) for tup in zip(*LT_G)]
     possibleMonomials = itertools.product(*possibleVarDegrees)
     basis = []

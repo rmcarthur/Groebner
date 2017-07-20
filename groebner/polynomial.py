@@ -28,21 +28,27 @@ class Polynomial(object):
         """
         Gets rid of any 0's on the outside of the coeff matrix, not giving any info.
         """
-        sum_values = np.sum(abs(self.coeff))
-        if sum_values == 0:
-            return
         for axis in range(self.coeff.ndim):
-            change = False
-            while not change:
-                temp = np.delete(self.coeff,-1,axis=axis)
-                sum_temp = np.sum(abs(temp))
-                if abs(sum_temp - sum_values) < 1.e-15:
-                    self.coeff = temp
-                else:
+            change = True
+            while change:
+                change = False
+                if self.coeff.shape[axis] == 1:
+                    continue
+                axisCount = 0
+                slices = list()
+                for i in self.coeff.shape:
+                    if axisCount == axis:
+                        s = slice(i-1,i)
+                    else:
+                        s = slice(0,i)
+                    slices.append(s)
+                    axisCount += 1
+                if np.sum(abs(self.coeff[slices])) == 0:
+                    self.coeff = np.delete(self.coeff,-1,axis=axis)
                     change = True
-                pass
             pass
         pass
+
     """
     def check_column_overload(self, max_values, current, column):
         '''
@@ -226,3 +232,18 @@ class Polynomial(object):
         if len(point) != len(self.coeff.shape):
             raise ValueError('Cannot evaluate polynomial in {} variables at point {}'\
             .format(self.dim, point))
+
+    def __eq__(self,other):
+        '''
+        check if coeff matrix is the same
+        '''
+        if self.shape != other.shape:
+            return False
+        return np.allclose(self.coeff, other.coeff)
+
+    def __ne__(self,other):
+        '''
+        check if coeff matrix is not the same same
+        '''
+        return not (self == other)
+

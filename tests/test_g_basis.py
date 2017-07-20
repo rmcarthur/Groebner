@@ -67,6 +67,7 @@ def test_solve():
     C = MultiPower(np.array([[-70,0,0,0],[0,0,0,1],[0,0,0,0],[0,0,0,0],[1,0,0,0]]))
     X = MultiPower(np.array([[1.]]))
     x1 = groebner_basis.solve([A,B,C])
+    print(x1)
     assert(X == x1[0])
 
     #Fifth Test

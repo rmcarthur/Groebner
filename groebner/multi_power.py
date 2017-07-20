@@ -4,6 +4,7 @@ from scipy.signal import convolve, fftconvolve
 from groebner.polynomial import Polynomial
 import itertools
 import math
+import time
 
 """
 1/11/17
@@ -13,6 +14,9 @@ coefficents, and inculdes basic operations (+,*,scaler multip, etc.)
 Assumes GRevLex ordering, but should be extended.
 Mostly used for testing vs other solvers
 """
+
+times = dict()
+times["mon_mult_power"] = 0
 
 class MultiPower(Polynomial):
     """
@@ -30,10 +34,15 @@ class MultiPower(Polynomial):
         input- Current: list, current location in ordering
         output- the next step in ordering
     """
+    def printTime():
+        print(times)
+    
+    def clearTime():
+        times["mon_mult_power"] = 0
 
     def __init__(self, coeff, order='degrevlex', lead_term=None, clean_zeros = True):
         super(MultiPower, self).__init__(coeff, order, lead_term, clean_zeros)
-
+        
     def __add__(self,other):
         '''
         Here we add an addition class.
@@ -101,32 +110,21 @@ class MultiPower(Polynomial):
         b = MultiPower(np.pad(b.coeff,add_b_list.astype(int),'constant'), clean_zeros = False)
         return a,b
 
-    def __eq__(self,other):
-        '''
-        check if coeff matrix is the same
-        '''
-        if self.shape != other.shape:
-            return False
-        else:
-            return np.allclose(self.coeff, other.coeff)
-
-    def __ne__(self,other):
-        '''
-        check if coeff matrix is not the same same
-        '''
-        return not (self == other)
-
     def mon_mult(self,M):
         '''
         M is a tuple of the powers in the monomial.
             Ex: x^3*y^4*z^2 would be input as (3,4,2)
         #P is the polynomial.
         '''
+        start = time.time()
         tuple1 = []
         for i in M:
             list1 = (i,0)
             tuple1.append(list1)
-        return MultiPower(np.pad(self.coeff, tuple1, 'constant', constant_values = 0), clean_zeros = False)
+        poly = MultiPower(np.pad(self.coeff, tuple1, 'constant', constant_values = 0), clean_zeros = False)
+        end = time.time()
+        times["mon_mult_power"] += (end-start)
+        return poly
 
     def evaluate_at(self, point):
         super(MultiPower, self).evaluate_at(point)
