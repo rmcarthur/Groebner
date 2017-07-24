@@ -3,8 +3,23 @@ import numpy as np
 from scipy.signal import fftconvolve, convolve
 import itertools
 from groebner.maxheap import Term
+import time
+
+times = dict()
+times["updateLeadTerm"] = 0
+times["monomialsList"] = 0
+times["leadTermCount"] = 0
 
 class Polynomial(object):
+    
+    def printTime():
+        print(times)
+    
+    def clearTime():
+        times["updateLeadTerm"] = 0
+        times["monomialsList"] = 0
+        times["leadTermCount"] = 0
+    
     def __init__(self, coeff, order='degrevlex', lead_term=None, clean_zeros = True):
         '''
         terms, int- number of chebyshev polynomials each variable can have. Each dimension will have term terms
@@ -167,6 +182,7 @@ class Polynomial(object):
         monomials : list of tuples
             list of monomials that make up the polynomial in degrevlex order
         '''
+        start = time.time()
         monomialTerms = list()
         for i in zip(*np.where(self.coeff != 0)):
             monomialTerms.append(Term(i))
@@ -176,14 +192,16 @@ class Polynomial(object):
         for i in monomialTerms[::-1]:
             monomials.append(i.val)
 
-        #gen = self.degrevlex_gen()
-        #for index in gen:
-        #    index = tuple(map(lambda i: int(i), index))
-        #    if (self.coeff[index] != 0):
-        #        monomials.append(index)
+        end = time.time()
+        times["monomialsList"] += (end - start)
+        self.sortedMonomials = monomials
         return monomials
 
+    def monSort(self):
+        self.sortedMonomials = self.monomialList()
+    
     def update_lead_term(self,start = None):
+        startTime = time.time()
         found = False
 
         non_zeros = set()
@@ -197,6 +215,10 @@ class Polynomial(object):
             self.lead_term = None
             self.lead_coeff = 0
 
+        endTime = time.time()
+        times["leadTermCount"] += 1
+        times["updateLeadTerm"] += (endTime - startTime)
+        
         """ THE GENERATOR IS BROKEN RIGHT NOW. UNTIL FIXED USE THIS NEW, ALTHOUGH POSSIBLY SLOWER CODE.
         if self.order == 'degrevlex':
             gen = self.degrevlex_gen()
