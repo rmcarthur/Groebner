@@ -238,14 +238,6 @@ class MultiCheb(Polynomial):
         """
         Takes a polynomial and the index of a monomial and returns the result of the multiplication.
         """
-        #This is the cheating convert to power way.
-        #power = cheb2poly(self)
-        #mult = power.mon_mult(idx)
-        #return poly2cheb(mult)
-
-
-
-
         pad_values = list()
         for i in idx: #iterates through monomial and creates a tuple of pad values for each dimension
             pad_dim_i = (i,0)
@@ -273,14 +265,7 @@ class MultiCheb(Polynomial):
 
         p2 = MultiCheb(solution_matrix)
         Pf = (p1+p2)
-        return MultiCheb(.5*Pf.coeff) #Make
-
-    def mon_mult(self, idx):
-        for i in range(len(idx)):
-            idx_zeros = np.zeros(len(idx),dtype = int)
-            idx_zeros[i] = idx[i]
-            self = self.mon_mult1(idx_zeros)
-        return self
+        return MultiCheb(.5*Pf.coeff, lead_term = self.lead_term + np.array(idx))
 
     def evaluate_at(self, point):
         super(MultiCheb, self).evaluate_at(point)
